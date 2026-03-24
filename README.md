@@ -54,6 +54,27 @@ python -m jobfinder.runs.promote_shortlist --decisions high maybe
 python -m jobfinder.runs.review_shortlist --status new --format table
 ```
 
+Web review UI:
+
+```bash
+cd web
+cp .env.example .env
+composer install
+php artisan serve
+```
+
+For Laravel Valet, link the `web` directory itself:
+
+```bash
+cd /Users/chrisbackhouse/Sites/jobs-ai/jobs-search-ai/web
+valet link jobs-ai
+```
+
+The Laravel app reads the shared SQLite database at `../data/jobs.db` and exposes:
+
+- `/interesting-jobs` for the shortlist table with filters
+- `/interesting-jobs/{id}/edit` for notes and status updates
+
 ## Schema overview
 
 `raw_jobs`
