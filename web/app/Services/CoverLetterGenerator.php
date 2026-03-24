@@ -55,23 +55,50 @@ class CoverLetterGenerator
     private function buildPrompt(InterestingJob $job): string
     {
         $applicant = config('applicant');
-        $skills = implode(', ', $applicant['core_skills'] ?? []);
-        $achievements = implode("\n- ", $applicant['achievements'] ?? []);
-        $avoidClaims = implode("\n- ", $applicant['avoid_claims'] ?? []);
+        $profile = $applicant['profile'] ?? [];
+        $skills = $this->stringifyList($applicant['core_skills'] ?? []);
+        $secondarySkills = $this->stringifyList($applicant['secondary_skills'] ?? []);
+        $targetRoles = $this->stringifyList($applicant['target_roles'] ?? []);
+        $strengths = $this->stringifyBullets($applicant['strengths'] ?? []);
+        $achievements = $this->stringifyBullets($applicant['achievements'] ?? []);
+        $constraints = $this->stringifyBullets($applicant['constraints'] ?? []);
+        $customizationRules = $this->stringifyBullets($applicant['customisation_rules'] ?? []);
+        $tone = $applicant['tone'] ?? [];
+        $preferences = $applicant['preferences'] ?? [];
+        $experienceNotes = $applicant['experience_notes'] ?? [];
+        $closingExamples = $this->stringifyBullets(($applicant['closing'] ?? [])['examples'] ?? []);
 
         return <<<PROMPT
 Write a tailored cover letter draft for this job.
 
 Applicant profile
-Name: {$applicant['name']}
-Headline: {$applicant['headline']}
+Name: {$profile['name']}
+Location: {$profile['location']}
+Work authorisation: {$profile['work_authorisation']}
 Summary: {$applicant['summary']}
 Core skills: {$skills}
+Secondary skills: {$secondarySkills}
+Target roles: {$targetRoles}
+Preferred scope: {$this->stringifyList($preferences['scope'] ?? [])}
+Preferred environment: {$this->stringifyList($preferences['environment'] ?? [])}
+Avoided environments/roles: {$this->stringifyList($preferences['avoid'] ?? [])}
+Strengths:
+{$strengths}
 Achievements:
-- {$achievements}
-Tone: {$applicant['tone']}
-Avoid:
-- {$avoidClaims}
+{$achievements}
+Experience notes:
+- Primary language: {$experienceNotes['primary_language']}
+- Python: {$experienceNotes['python']}
+- Positioning: {$experienceNotes['positioning']}
+Tone style: {$tone['style']}
+Tone guidelines:
+{$this->stringifyBullets($tone['guidelines'] ?? [])}
+Constraints:
+{$constraints}
+Customisation rules:
+{$customizationRules}
+Closing examples:
+{$closingExamples}
 
 Job context
 Title: {$job->title}
@@ -91,8 +118,12 @@ Instructions
 - Use concrete alignment with the role and applicant profile.
 - Do not invent experience, tools, achievements, or domain expertise.
 - If the job emphasizes skills outside the applicant profile, acknowledge adjacent strengths without overstating expertise.
+- Treat Python as secondary tooling experience, not primary production positioning.
+- Prioritise Java, backend, API, integration, platform, and technical leadership strengths where relevant.
 - Do not use bullet points.
-- End with "{$applicant['closing']}" followed by the applicant name.
+- End with one of these closings where appropriate:
+{$closingExamples}
+- Sign off with the applicant name.
 PROMPT;
     }
 
@@ -129,5 +160,21 @@ PROMPT;
         }
 
         return 'OpenAI request failed with status '.$response->status().'.';
+    }
+
+    private function stringifyList(array $values): string
+    {
+        return implode(', ', array_filter(array_map('strval', $values)));
+    }
+
+    private function stringifyBullets(array $values): string
+    {
+        $items = array_filter(array_map(static fn ($value) => trim((string) $value), $values));
+
+        if ($items === []) {
+            return '- None';
+        }
+
+        return '- '.implode("\n- ", $items);
     }
 }
