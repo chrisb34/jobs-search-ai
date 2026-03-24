@@ -1,0 +1,7 @@
+searches:
+  - name: linkedin-tech-lead-fr-remote
+    source: linkedin
+    search_url: "https://www.linkedin.com/jobs/search/?currentJobId=4386382859&f_WT=2&geoId=105015875&keywords=tech%20lead&origin=JOB_SEARCH_PAGE_JOB_FILTER&refresh=true"
+  - name: linkedin-tech-lead-fr-remote-page-2
+    source: linkedin
+    search_url: "https://www.linkedin.com/jobs/search/?currentJobId=4380112506&f_WT=2&geoId=105015875&keywords=tech%20lead&origin=JOB_SEARCH_PAGE_JOB_FILTER&refresh=true&start=25"

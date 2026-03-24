@@ -1,0 +1,222 @@
+"""Storage helpers for scrape runs and job persistence."""
+
+from __future__ import annotations
+
+import json
+import sqlite3
+from contextlib import contextmanager
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Iterator
+
+from jobfinder.core.schema import SCHEMA_SQL
+
+
+def utc_now() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+@contextmanager
+def connect(db_path: str | Path) -> Iterator[sqlite3.Connection]:
+    conn = sqlite3.connect(str(db_path))
+    conn.row_factory = sqlite3.Row
+    try:
+        yield conn
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def init_db(conn: sqlite3.Connection) -> None:
+    conn.executescript(SCHEMA_SQL)
+
+
+def create_run(conn: sqlite3.Connection, source: str, search_url: str) -> int:
+    started_at = utc_now()
+    cursor = conn.execute(
+        """
+        INSERT INTO scrape_runs (source, search_url, started_at, status)
+        VALUES (?, ?, ?, 'running')
+        """,
+        (source, search_url, started_at),
+    )
+    conn.execute("UPDATE raw_jobs SET seen_in_run = 0 WHERE source = ?", (source,))
+    return int(cursor.lastrowid)
+
+
+def finish_run(
+    conn: sqlite3.Connection,
+    run_id: int,
+    source: str,
+    jobs_seen: int,
+    error_message: str | None = None,
+) -> None:
+    completed_at = utc_now()
+    status = "failed" if error_message else "completed"
+    conn.execute(
+        """
+        UPDATE scrape_runs
+        SET completed_at = ?, status = ?, jobs_seen = ?, error_message = ?
+        WHERE id = ?
+        """,
+        (completed_at, status, jobs_seen, error_message, run_id),
+    )
+    conn.execute(
+        """
+        UPDATE raw_jobs
+        SET missing_runs = CASE WHEN seen_in_run = 1 THEN 0 ELSE missing_runs + 1 END,
+            status = CASE
+                WHEN seen_in_run = 1 THEN 'active'
+                WHEN seen_in_run = 0 AND missing_runs + 1 >= 3 THEN 'closed'
+                ELSE 'missing'
+            END
+        WHERE source = ?
+        """,
+        (source,),
+    )
+
+
+def upsert_raw_job(conn: sqlite3.Connection, run_id: int, job: dict) -> None:
+    now = utc_now()
+    conn.execute(
+        """
+        INSERT INTO raw_jobs (
+            source, source_job_id, url, title, company, location_raw,
+            description_raw, salary_raw, contract_raw, remote_raw,
+            posted_at_raw, listed_at, scraped_at, first_seen_at, last_seen_at,
+            status, missing_runs, last_run_id, seen_in_run, content_hash, extra_json
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', 0, ?, 1, ?, ?)
+        ON CONFLICT(source, source_job_id) DO UPDATE SET
+            url = excluded.url,
+            title = excluded.title,
+            company = excluded.company,
+            location_raw = excluded.location_raw,
+            description_raw = excluded.description_raw,
+            salary_raw = excluded.salary_raw,
+            contract_raw = excluded.contract_raw,
+            remote_raw = excluded.remote_raw,
+            posted_at_raw = excluded.posted_at_raw,
+            listed_at = excluded.listed_at,
+            scraped_at = excluded.scraped_at,
+            last_seen_at = excluded.last_seen_at,
+            status = 'active',
+            missing_runs = 0,
+            last_run_id = excluded.last_run_id,
+            seen_in_run = 1,
+            content_hash = excluded.content_hash,
+            extra_json = excluded.extra_json
+        """,
+        (
+            job["source"],
+            job["source_job_id"],
+            job["url"],
+            job.get("title"),
+            job.get("company"),
+            job.get("location_raw"),
+            job.get("description_raw"),
+            job.get("salary_raw"),
+            job.get("contract_raw"),
+            job.get("remote_raw"),
+            job.get("posted_at_raw"),
+            job.get("listed_at"),
+            now,
+            now,
+            now,
+            run_id,
+            job["content_hash"],
+            json.dumps(job.get("extra", {}), ensure_ascii=True, sort_keys=True),
+        ),
+    )
+
+
+def upsert_normalized_job(conn: sqlite3.Connection, normalized_job: dict) -> None:
+    conn.execute(
+        """
+        INSERT INTO normalized_jobs (
+            source, source_job_id, canonical_job_key, title_normalized,
+            company_normalized, country, city, remote_type, contract_type,
+            salary_currency, salary_min, salary_max, seniority, language,
+            tech_stack, ai_score, ai_reason, ai_decision, updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(source, source_job_id) DO UPDATE SET
+            canonical_job_key = excluded.canonical_job_key,
+            title_normalized = excluded.title_normalized,
+            company_normalized = excluded.company_normalized,
+            country = excluded.country,
+            city = excluded.city,
+            remote_type = excluded.remote_type,
+            contract_type = excluded.contract_type,
+            salary_currency = excluded.salary_currency,
+            salary_min = excluded.salary_min,
+            salary_max = excluded.salary_max,
+            seniority = excluded.seniority,
+            language = excluded.language,
+            tech_stack = excluded.tech_stack,
+            ai_score = excluded.ai_score,
+            ai_reason = excluded.ai_reason,
+            ai_decision = excluded.ai_decision,
+            updated_at = excluded.updated_at
+        """,
+        (
+            normalized_job["source"],
+            normalized_job["source_job_id"],
+            normalized_job["canonical_job_key"],
+            normalized_job.get("title_normalized"),
+            normalized_job.get("company_normalized"),
+            normalized_job.get("country"),
+            normalized_job.get("city"),
+            normalized_job.get("remote_type"),
+            normalized_job.get("contract_type"),
+            normalized_job.get("salary_currency"),
+            normalized_job.get("salary_min"),
+            normalized_job.get("salary_max"),
+            normalized_job.get("seniority"),
+            normalized_job.get("language"),
+            normalized_job.get("tech_stack"),
+            normalized_job.get("ai_score"),
+            normalized_job.get("ai_reason"),
+            normalized_job.get("ai_decision"),
+            utc_now(),
+        ),
+    )
+
+
+def query_review_jobs(
+    conn: sqlite3.Connection,
+    *,
+    status: str = "active",
+    limit: int = 50,
+    remote_only: bool = False,
+) -> list[sqlite3.Row]:
+    where_clauses = ["r.status = ?"]
+    params: list[object] = [status]
+
+    if remote_only:
+        where_clauses.append("n.remote_type = 'remote'")
+
+    params.append(limit)
+    sql = f"""
+        SELECT
+            r.source,
+            r.source_job_id,
+            r.title,
+            r.company,
+            r.location_raw,
+            r.url,
+            r.posted_at_raw,
+            r.last_seen_at,
+            n.remote_type,
+            n.contract_type,
+            n.city,
+            n.country,
+            n.canonical_job_key
+        FROM raw_jobs r
+        LEFT JOIN normalized_jobs n
+            ON n.source = r.source AND n.source_job_id = r.source_job_id
+        WHERE {' AND '.join(where_clauses)}
+        ORDER BY r.last_seen_at DESC
+        LIMIT ?
+    """
+    return list(conn.execute(sql, params))
