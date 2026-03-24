@@ -58,6 +58,7 @@ excluded:
     - sales
     - recruiter
     - crypto
+    - .NET
   keyword_penalty: 20
   seniority:
     - intern
