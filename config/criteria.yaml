@@ -57,6 +57,7 @@ excluded:
     - unpaid
     - sales
     - recruiter
+    - crypto
   keyword_penalty: 20
   seniority:
     - intern
