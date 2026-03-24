@@ -94,6 +94,10 @@ CREATE TABLE IF NOT EXISTS interesting_jobs (
     salary_snapshot TEXT,
     source_snapshot_json TEXT,
     snapshot_taken_at TEXT,
+    cover_letter_draft TEXT,
+    cover_letter_generated_at TEXT,
+    cover_letter_model TEXT,
+    cover_letter_usage_json TEXT,
     promoted_at TEXT NOT NULL,
     updated_at TEXT NOT NULL,
     UNIQUE(source, source_job_id)

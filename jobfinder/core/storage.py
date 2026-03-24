@@ -42,6 +42,10 @@ def _ensure_interesting_jobs_columns(conn: sqlite3.Connection) -> None:
         "salary_snapshot": "TEXT",
         "source_snapshot_json": "TEXT",
         "snapshot_taken_at": "TEXT",
+        "cover_letter_draft": "TEXT",
+        "cover_letter_generated_at": "TEXT",
+        "cover_letter_model": "TEXT",
+        "cover_letter_usage_json": "TEXT",
     }
     for column_name, column_type in required_columns.items():
         if column_name in existing_columns:

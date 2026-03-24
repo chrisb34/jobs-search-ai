@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\InterestingJob;
+use App\Services\CoverLetterGenerator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use RuntimeException;
 
 class InterestingJobController extends Controller
 {
@@ -78,5 +80,31 @@ class InterestingJobController extends Controller
         return redirect()
             ->route('interesting-jobs.index')
             ->with('status', 'Job updated.');
+    }
+
+    public function generateCoverLetter(
+        InterestingJob $interestingJob,
+        CoverLetterGenerator $generator
+    ): RedirectResponse {
+        try {
+            $result = $generator->generate($interestingJob);
+        } catch (RuntimeException $exception) {
+            return redirect()
+                ->route('interesting-jobs.edit', $interestingJob)
+                ->with('status', $exception->getMessage());
+        }
+
+        $interestingJob->fill([
+            'cover_letter_draft' => $result['draft'],
+            'cover_letter_generated_at' => now(),
+            'cover_letter_model' => $result['model'],
+            'cover_letter_usage_json' => $result['usage'],
+            'updated_at' => now(),
+        ]);
+        $interestingJob->save();
+
+        return redirect()
+            ->route('interesting-jobs.edit', $interestingJob)
+            ->with('status', 'Cover letter draft generated.');
     }
 }

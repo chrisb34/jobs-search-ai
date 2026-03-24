@@ -75,6 +75,20 @@ The Laravel app reads the shared SQLite database at `../data/jobs.db` and expose
 - `/interesting-jobs` for the shortlist table with filters
 - `/interesting-jobs/{id}/edit` for notes and status updates
 
+Cover letter generation:
+
+- Add your API settings to `web/.env`:
+
+```bash
+OPENAI_API_KEY=...
+OPENAI_MODEL=gpt-5-mini
+OPENAI_BASE_URL=https://api.openai.com/v1
+```
+
+- Edit [applicant.php](/Users/chrisbackhouse/Sites/jobs-ai/jobs-search-ai/web/config/applicant.php) with your actual profile, skills, achievements, and tone preferences.
+- In the Laravel UI, open a shortlisted job and use `Generate cover letter`.
+- Generated drafts, model name, generation timestamp, and usage metadata are stored on `interesting_jobs`.
+
 ## Schema overview
 
 `raw_jobs`

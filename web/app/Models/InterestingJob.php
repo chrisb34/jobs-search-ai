@@ -27,6 +27,10 @@ class InterestingJob extends Model
         'salary_snapshot',
         'source_snapshot_json',
         'snapshot_taken_at',
+        'cover_letter_draft',
+        'cover_letter_generated_at',
+        'cover_letter_model',
+        'cover_letter_usage_json',
         'promoted_at',
         'updated_at',
     ];
@@ -38,7 +42,9 @@ class InterestingJob extends Model
         return [
             'ai_score' => 'float',
             'source_snapshot_json' => 'array',
+            'cover_letter_usage_json' => 'array',
             'snapshot_taken_at' => 'datetime',
+            'cover_letter_generated_at' => 'datetime',
             'promoted_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
