@@ -60,6 +60,8 @@ excluded:
     - crypto
     - .NET
   keyword_penalty: 20
+  language_penalties:
+    fr: 12
   seniority:
     - intern
     - junior

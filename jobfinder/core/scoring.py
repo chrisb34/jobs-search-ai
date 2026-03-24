@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 
 
@@ -102,6 +103,12 @@ def score_job(job: dict, criteria: dict) -> ScoreResult:
             score -= excluded.get("seniority_penalty", 25)
             reasons.append(f"excluded seniority: {seniority}")
 
+    language_code = _detect_language(job)
+    language_penalties = excluded.get("language_penalties", {})
+    if language_code in language_penalties:
+        score -= float(language_penalties[language_code])
+        reasons.append(f"language penalty: {language_code} advert")
+
     min_score_high = thresholds.get("high", 35)
     min_score_maybe = thresholds.get("maybe", 20)
     decision = "reject"
@@ -135,3 +142,49 @@ def _stringify_tech_stack(value: str) -> str:
     if isinstance(parsed, list):
         return " ".join(str(item) for item in parsed)
     return str(parsed)
+
+
+def _detect_language(job: dict) -> str | None:
+    description = (job.get("description_raw") or "").lower()
+    title = (job.get("title") or "").lower()
+
+    if not description and not title:
+        return None
+
+    french_markers = [
+        " vous ",
+        " nous ",
+        " votre ",
+        " vos ",
+        " poste ",
+        " emploi ",
+        " mission ",
+        " profil ",
+        " entreprise ",
+        " experience ",
+        " expérience ",
+        " ingenieur ",
+        " ingénieur ",
+        " developpeur ",
+        " développeur ",
+        " etes ",
+        " êtes ",
+        " offre ",
+        " cdi ",
+        " bac+",
+        " competences ",
+        " compétences ",
+        " connaissance ",
+        " bon niveau de francais",
+        " bon niveau de français",
+    ]
+    french_pattern = re.compile(r"\b(le|la|les|des|une|avec|pour|dans|sur|chez|vous|nous|vos|notre)\b")
+    combined = f" {title} {description} "
+
+    marker_hits = sum(1 for marker in french_markers if marker in combined)
+    pattern_hits = len(french_pattern.findall(combined))
+
+    if marker_hits >= 2 or pattern_hits >= 8:
+        return "fr"
+
+    return None
