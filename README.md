@@ -10,6 +10,7 @@ Initial MVP for a job search scraper and SQLite pipeline.
 - Run tracking and simple lifecycle status updates
 - Saved search config via YAML
 - Review/export command for active jobs
+- Rule-based scoring from criteria config
 
 ## Quick start
 
@@ -38,6 +39,13 @@ python -m jobfinder.runs.export_jobs --limit 20 --format table
 python -m jobfinder.runs.export_jobs --remote-only --format json --output data/remote_jobs.json
 ```
 
+Score jobs:
+
+```bash
+python -m jobfinder.runs.score_jobs --criteria config/criteria.yaml --only-unscored
+sqlite3 data/jobs.db "select title_normalized, ai_score, ai_decision from normalized_jobs order by ai_score desc limit 10;"
+```
+
 ## Schema overview
 
 `raw_jobs`
@@ -60,3 +68,4 @@ python -m jobfinder.runs.export_jobs --remote-only --format json --output data/r
 - The current normalization is basic and intended as a Phase 1 foundation.
 - If a LinkedIn search URL includes `start=25`, `start=50`, and so on, the scraper now uses that as the base pagination offset.
 - With `--auto-pages`, the scraper also loads the full LinkedIn search page, reads visible pager links when present, and computes page offsets in `25`-job steps.
+- Rule-based scoring is configured in [config/criteria.yaml](/Users/chrisbackhouse/Sites/jobs-ai/jobs-search-ai/config/criteria.yaml) so you can tune preferences without changing Python code.

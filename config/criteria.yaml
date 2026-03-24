@@ -1,0 +1,68 @@
+desired:
+  title_keywords:
+    - tech lead
+    - technical lead
+    - engineering manager
+    - staff engineer
+    - principal engineer
+    - senior software engineer
+    - senior software developer
+  title_keyword_weight: 12
+  tech_keywords:
+    - python
+    - ai
+    - llm
+    - machine learning
+    - data
+    - automation
+    - sqlite
+    - sql
+    - api
+    - backend
+  tech_keyword_weight: 6
+  seniority:
+    - lead
+    - senior
+    - staff
+    - principal
+  seniority_weight: 10
+  remote_types:
+    - remote
+    - hybrid
+  remote_weight: 8
+  contract_types:
+    - full-time
+    - full time
+  contract_weight: 4
+  countries:
+    - france
+    - united kingdom
+    - germany
+    - netherlands
+  cities:
+    - paris
+    - london
+    - berlin
+    - amsterdam
+  location_keywords:
+    - emea
+    - europe
+  location_weight: 5
+
+excluded:
+  keywords:
+    - internship
+    - intern
+    - volunteer
+    - unpaid
+    - sales
+    - recruiter
+  keyword_penalty: 20
+  seniority:
+    - intern
+    - junior
+  seniority_penalty: 25
+
+thresholds:
+  high: 35
+  maybe: 20

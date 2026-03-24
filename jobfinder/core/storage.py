@@ -220,3 +220,60 @@ def query_review_jobs(
         LIMIT ?
     """
     return list(conn.execute(sql, params))
+
+
+def query_jobs_for_scoring(
+    conn: sqlite3.Connection,
+    *,
+    status: str = "active",
+    limit: int = 200,
+    only_unscored: bool = False,
+) -> list[sqlite3.Row]:
+    where_clauses = ["r.status = ?"]
+    params: list[object] = [status]
+    if only_unscored:
+        where_clauses.append("n.ai_decision IS NULL")
+    params.append(limit)
+    sql = f"""
+        SELECT
+            r.source,
+            r.source_job_id,
+            r.title,
+            r.company,
+            r.location_raw,
+            r.description_raw,
+            n.title_normalized,
+            n.company_normalized,
+            n.country,
+            n.city,
+            n.remote_type,
+            n.contract_type,
+            n.seniority,
+            n.tech_stack
+        FROM raw_jobs r
+        INNER JOIN normalized_jobs n
+            ON n.source = r.source AND n.source_job_id = r.source_job_id
+        WHERE {' AND '.join(where_clauses)}
+        ORDER BY r.last_seen_at DESC
+        LIMIT ?
+    """
+    return list(conn.execute(sql, params))
+
+
+def update_job_score(
+    conn: sqlite3.Connection,
+    *,
+    source: str,
+    source_job_id: str,
+    score: float,
+    decision: str,
+    reason: str,
+) -> None:
+    conn.execute(
+        """
+        UPDATE normalized_jobs
+        SET ai_score = ?, ai_reason = ?, ai_decision = ?, updated_at = ?
+        WHERE source = ? AND source_job_id = ?
+        """,
+        (score, reason, decision, utc_now(), source, source_job_id),
+    )
