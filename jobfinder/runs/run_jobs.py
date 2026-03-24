@@ -16,6 +16,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--db-path", default="data/jobs.db", help="SQLite database path")
     parser.add_argument("--pages", type=int, default=1, help="Number of result pages to fetch")
     parser.add_argument(
+        "--auto-pages",
+        action="store_true",
+        help="Discover result pages from the LinkedIn search pager before scraping",
+    )
+    parser.add_argument(
         "--delay-seconds",
         type=float,
         default=0.5,
@@ -37,7 +42,7 @@ def main() -> int:
         run_id = create_run(conn, source=scraper.source, search_url=args.search_url)
         jobs_seen = 0
         try:
-            jobs = scraper.scrape(max_pages=args.pages)
+            jobs = scraper.scrape(max_pages=args.pages, auto_pages=args.auto_pages)
             for job in jobs:
                 upsert_raw_job(conn, run_id=run_id, job=job)
                 upsert_normalized_job(conn, normalize_raw_job(job))

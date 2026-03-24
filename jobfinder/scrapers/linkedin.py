@@ -72,24 +72,72 @@ class LinkedInScraper:
         self.session = requests.Session()
         self.session.headers.update({"User-Agent": USER_AGENT, "Accept-Language": "en-US,en;q=0.9"})
 
-    def scrape(self, max_pages: int = 1) -> list[dict]:
+    def scrape(self, max_pages: int = 1, auto_pages: bool = False) -> list[dict]:
         jobs: list[dict] = []
         seen_ids: set[str] = set()
-        for page in range(max_pages):
-            start = self.config.start + (page * 25)
-            html_page = self._fetch(self.config.search_api_url(start=start))
+        page_starts, prefetched_pages = self._build_page_plan(max_pages=max_pages, auto_pages=auto_pages)
+        for start in page_starts:
+            html_page = prefetched_pages.get(start)
+            if html_page is None:
+                html_page = self._fetch(self.config.search_api_url(start=start))
             cards = list(self._parse_search_cards(html_page))
             if not cards:
                 break
+            new_cards = 0
             for card in cards:
                 if card["source_job_id"] in seen_ids:
                     continue
                 detail = self._fetch_job_detail(card["url"])
                 jobs.append(self._build_raw_job(card, detail))
                 seen_ids.add(card["source_job_id"])
+                new_cards += 1
                 if self.delay_seconds:
                     time.sleep(self.delay_seconds)
+            if new_cards == 0:
+                break
         return jobs
+
+    def _build_page_plan(self, max_pages: int, auto_pages: bool) -> tuple[list[int], dict[int, str]]:
+        initial_start = self.config.start
+        initial_page_html = self._fetch(self.config.search_api_url(start=initial_start))
+        prefetched_pages = {initial_start: initial_page_html}
+        if not auto_pages:
+            return (
+                [self.config.start + (page * 25) for page in range(max_pages)],
+                prefetched_pages,
+            )
+
+        discovered_starts = self._discover_page_starts()
+        if not discovered_starts:
+            discovered_starts = [self.config.start + (page * 25) for page in range(max_pages)]
+
+        limited_starts = discovered_starts[:max_pages]
+        if initial_start not in limited_starts:
+            limited_starts.insert(0, initial_start)
+        return sorted(set(limited_starts)), prefetched_pages
+
+    def _discover_page_starts(self) -> list[int]:
+        search_page_html = self._fetch(self.config.search_url)
+        soup = BeautifulSoup(search_page_html, "html.parser")
+        page_numbers: set[int] = set()
+
+        for item in soup.select("ul.jobs-search-pagination__pages li"):
+            text = item.get_text(" ", strip=True)
+            if text.isdigit():
+                page_numbers.add(int(text))
+
+        for link in soup.select("ul.jobs-search-pagination__pages a[href]"):
+            href = link.get("href") or ""
+            match = re.search(r"[?&]start=(\d+)", href)
+            if match:
+                start = int(match.group(1))
+                page_numbers.add((start // 25) + 1)
+
+        if not page_numbers:
+            return []
+
+        max_page = max(page_numbers)
+        return [((page - 1) * 25) for page in range(1, max_page + 1)]
 
     def _fetch(self, url: str) -> str:
         last_error: Exception | None = None

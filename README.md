@@ -19,7 +19,8 @@ source .venv/bin/activate
 pip install -e .
 python -m jobfinder.runs.run_jobs \
   --search-url 'https://www.linkedin.com/jobs/search/?currentJobId=4386382859&f_WT=2&geoId=105015875&keywords=tech%20lead&origin=JOB_SEARCH_PAGE_JOB_FILTER&refresh=true' \
-  --pages 1
+  --pages 3 \
+  --auto-pages
 ```
 
 The database will be created at `data/jobs.db`.
@@ -27,7 +28,7 @@ The database will be created at `data/jobs.db`.
 Run saved searches from config:
 
 ```bash
-python -m jobfinder.runs.run_saved_searches --config config/sources.yaml --pages 1
+python -m jobfinder.runs.run_saved_searches --config config/sources.yaml --pages 3 --auto-pages
 ```
 
 Review/export jobs:
@@ -58,3 +59,4 @@ python -m jobfinder.runs.export_jobs --remote-only --format json --output data/r
 - LinkedIn markup can change. Expect the scraper to need maintenance.
 - The current normalization is basic and intended as a Phase 1 foundation.
 - If a LinkedIn search URL includes `start=25`, `start=50`, and so on, the scraper now uses that as the base pagination offset.
+- With `--auto-pages`, the scraper also loads the full LinkedIn search page, reads visible pager links when present, and computes page offsets in `25`-job steps.

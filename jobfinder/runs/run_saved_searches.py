@@ -16,18 +16,31 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--config", default="config/sources.yaml", help="YAML config path")
     parser.add_argument("--db-path", default="data/jobs.db", help="SQLite database path")
     parser.add_argument("--pages", type=int, default=1, help="Pages per saved search")
+    parser.add_argument(
+        "--auto-pages",
+        action="store_true",
+        help="Discover result pages from the LinkedIn search pager before scraping",
+    )
     parser.add_argument("--delay-seconds", type=float, default=0.5, help="Delay between detail requests")
     parser.add_argument("--search-name", help="Optional single search name to run")
     return parser
 
 
-def _run_single_search(conn, *, search_name: str, search_url: str, pages: int, delay_seconds: float) -> int:
+def _run_single_search(
+    conn,
+    *,
+    search_name: str,
+    search_url: str,
+    pages: int,
+    auto_pages: bool,
+    delay_seconds: float,
+) -> int:
     config = LinkedInSearchConfig.from_search_url(search_url)
     scraper = LinkedInScraper(config=config, delay_seconds=delay_seconds)
     run_id = create_run(conn, source=scraper.source, search_url=search_url)
     jobs_seen = 0
     try:
-        jobs = scraper.scrape(max_pages=pages)
+        jobs = scraper.scrape(max_pages=pages, auto_pages=auto_pages)
         for job in jobs:
             upsert_raw_job(conn, run_id=run_id, job=job)
             upsert_normalized_job(conn, normalize_raw_job(job))
@@ -69,6 +82,7 @@ def main() -> int:
                 search_name=search.get("name", "unnamed"),
                 search_url=search["search_url"],
                 pages=args.pages,
+                auto_pages=args.auto_pages,
                 delay_seconds=args.delay_seconds,
             )
 
