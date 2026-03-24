@@ -22,6 +22,10 @@
             <div class="eyebrow">Contract</div>
             <div>{{ $job->contract_type ?: 'Unknown' }}</div>
         </div>
+        <div class="meta-card">
+            <div class="eyebrow">Snapshot</div>
+            <div>{{ $job->snapshot_taken_at?->format('Y-m-d H:i') ?? 'Not captured yet' }}</div>
+        </div>
     </div>
 
     <div class="panel" style="padding: 22px;">
@@ -32,6 +36,16 @@
         <div style="margin-bottom: 18px;">
             <label>AI Reason</label>
             <div class="muted">{{ $job->ai_reason ?: 'No scoring reason recorded.' }}</div>
+        </div>
+
+        <div style="margin-bottom: 18px;">
+            <label>Salary Snapshot</label>
+            <div class="muted">{{ $job->salary_snapshot ?: 'No salary snapshot recorded.' }}</div>
+        </div>
+
+        <div style="margin-bottom: 24px;">
+            <label>Description Snapshot</label>
+            <div class="muted" style="white-space: pre-wrap; line-height: 1.5;">{{ $job->description_snapshot ?: 'No local description snapshot recorded.' }}</div>
         </div>
 
         <form method="post" action="{{ route('interesting-jobs.update', $job) }}" class="edit-grid">

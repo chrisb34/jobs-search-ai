@@ -94,6 +94,7 @@ The Laravel app reads the shared SQLite database at `../data/jobs.db` and expose
 
 - Stores promoted `high` and `maybe` jobs for ongoing review and application tracking
 - Starts each promoted row with `shortlist_status = 'new'`
+- Stores a durable local snapshot of the description, salary text, and raw source metadata at promotion time
 
 ## Notes
 

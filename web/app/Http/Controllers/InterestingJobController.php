@@ -40,7 +40,8 @@ class InterestingJobController extends Controller
                     ->where('title', 'like', "%{$search}%")
                     ->orWhere('company', 'like', "%{$search}%")
                     ->orWhere('location_raw', 'like', "%{$search}%")
-                    ->orWhere('notes', 'like', "%{$search}%");
+                    ->orWhere('notes', 'like', "%{$search}%")
+                    ->orWhere('description_snapshot', 'like', "%{$search}%");
             });
         }
 

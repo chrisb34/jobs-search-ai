@@ -90,6 +90,10 @@ CREATE TABLE IF NOT EXISTS interesting_jobs (
     ai_decision TEXT NOT NULL,
     shortlist_status TEXT NOT NULL DEFAULT 'new',
     notes TEXT,
+    description_snapshot TEXT,
+    salary_snapshot TEXT,
+    source_snapshot_json TEXT,
+    snapshot_taken_at TEXT,
     promoted_at TEXT NOT NULL,
     updated_at TEXT NOT NULL,
     UNIQUE(source, source_job_id)

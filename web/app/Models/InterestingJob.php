@@ -23,6 +23,10 @@ class InterestingJob extends Model
         'ai_decision',
         'shortlist_status',
         'notes',
+        'description_snapshot',
+        'salary_snapshot',
+        'source_snapshot_json',
+        'snapshot_taken_at',
         'promoted_at',
         'updated_at',
     ];
@@ -33,6 +37,8 @@ class InterestingJob extends Model
     {
         return [
             'ai_score' => 'float',
+            'source_snapshot_json' => 'array',
+            'snapshot_taken_at' => 'datetime',
             'promoted_at' => 'datetime',
             'updated_at' => 'datetime',
         ];

@@ -29,6 +29,26 @@ def connect(db_path: str | Path) -> Iterator[sqlite3.Connection]:
 
 def init_db(conn: sqlite3.Connection) -> None:
     conn.executescript(SCHEMA_SQL)
+    _ensure_interesting_jobs_columns(conn)
+
+
+def _ensure_interesting_jobs_columns(conn: sqlite3.Connection) -> None:
+    existing_columns = {
+        row["name"]
+        for row in conn.execute("PRAGMA table_info(interesting_jobs)")
+    }
+    required_columns = {
+        "description_snapshot": "TEXT",
+        "salary_snapshot": "TEXT",
+        "source_snapshot_json": "TEXT",
+        "snapshot_taken_at": "TEXT",
+    }
+    for column_name, column_type in required_columns.items():
+        if column_name in existing_columns:
+            continue
+        conn.execute(
+            f"ALTER TABLE interesting_jobs ADD COLUMN {column_name} {column_type}"
+        )
 
 
 def create_run(conn: sqlite3.Connection, source: str, search_url: str) -> int:
@@ -296,6 +316,9 @@ def query_jobs_for_shortlist(
             r.company,
             r.url,
             r.location_raw,
+            r.description_raw,
+            r.salary_raw,
+            r.extra_json,
             n.canonical_job_key,
             n.remote_type,
             n.contract_type,
@@ -320,9 +343,11 @@ def upsert_interesting_job(conn: sqlite3.Connection, row: sqlite3.Row) -> None:
         INSERT INTO interesting_jobs (
             source, source_job_id, canonical_job_key, title, company, url,
             location_raw, remote_type, contract_type, ai_score, ai_reason,
-            ai_decision, shortlist_status, promoted_at, updated_at
+            ai_decision, shortlist_status, notes, description_snapshot,
+            salary_snapshot, source_snapshot_json, snapshot_taken_at,
+            promoted_at, updated_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', NULL, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(source, source_job_id) DO UPDATE SET
             canonical_job_key = excluded.canonical_job_key,
             title = excluded.title,
@@ -334,6 +359,30 @@ def upsert_interesting_job(conn: sqlite3.Connection, row: sqlite3.Row) -> None:
             ai_score = excluded.ai_score,
             ai_reason = excluded.ai_reason,
             ai_decision = excluded.ai_decision,
+            description_snapshot = CASE
+                WHEN interesting_jobs.shortlist_status IN ('new', 'reviewing')
+                    OR interesting_jobs.description_snapshot IS NULL
+                THEN excluded.description_snapshot
+                ELSE interesting_jobs.description_snapshot
+            END,
+            salary_snapshot = CASE
+                WHEN interesting_jobs.shortlist_status IN ('new', 'reviewing')
+                    OR interesting_jobs.salary_snapshot IS NULL
+                THEN excluded.salary_snapshot
+                ELSE interesting_jobs.salary_snapshot
+            END,
+            source_snapshot_json = CASE
+                WHEN interesting_jobs.shortlist_status IN ('new', 'reviewing')
+                    OR interesting_jobs.source_snapshot_json IS NULL
+                THEN excluded.source_snapshot_json
+                ELSE interesting_jobs.source_snapshot_json
+            END,
+            snapshot_taken_at = CASE
+                WHEN interesting_jobs.shortlist_status IN ('new', 'reviewing')
+                    OR interesting_jobs.snapshot_taken_at IS NULL
+                THEN excluded.snapshot_taken_at
+                ELSE interesting_jobs.snapshot_taken_at
+            END,
             updated_at = excluded.updated_at
         """,
         (
@@ -349,6 +398,10 @@ def upsert_interesting_job(conn: sqlite3.Connection, row: sqlite3.Row) -> None:
             row["ai_score"],
             row["ai_reason"],
             row["ai_decision"],
+            row["description_raw"],
+            row["salary_raw"],
+            row["extra_json"],
+            now,
             now,
             now,
         ),
@@ -387,6 +440,11 @@ def query_interesting_jobs(
             ai_score,
             ai_decision,
             shortlist_status,
+            description_snapshot,
+            salary_snapshot,
+            source_snapshot_json,
+            snapshot_taken_at,
+            notes,
             url,
             updated_at
         FROM interesting_jobs
