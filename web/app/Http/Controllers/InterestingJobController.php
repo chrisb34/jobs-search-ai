@@ -31,6 +31,10 @@ class InterestingJobController extends Controller
             $query->where('shortlist_status', $request->string('status'));
         }
 
+        if ($request->filled('min_score')) {
+            $query->where('ai_score', '>=', (float) $request->input('min_score'));
+        }
+
         if ($request->boolean('remote_only')) {
             $query->where('remote_type', 'remote');
         }
@@ -49,7 +53,7 @@ class InterestingJobController extends Controller
 
         return view('interesting-jobs.index', [
             'jobs' => $query->paginate(25)->withQueryString(),
-            'filters' => $request->only(['decision', 'status', 'q', 'remote_only']),
+            'filters' => $request->only(['decision', 'status', 'q', 'remote_only', 'min_score']),
             'statusOptions' => self::STATUSES,
             'decisionOptions' => ['high', 'maybe', 'reject'],
         ]);

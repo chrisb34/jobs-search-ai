@@ -28,6 +28,10 @@
                 @endforeach
             </select>
         </div>
+        <div>
+            <label for="min_score">Min score</label>
+            <input class="compact-input" id="min_score" type="text" name="min_score" value="{{ $filters['min_score'] ?? '' }}" placeholder="e.g. 35">
+        </div>
         <div class="checkbox">
             <input id="remote_only" type="checkbox" name="remote_only" value="1" @checked(($filters['remote_only'] ?? null) === '1')>
             <label for="remote_only" style="margin: 0;">Remote only</label>
@@ -65,6 +69,9 @@
                             <span class="pill status">{{ strtoupper($job->shortlist_status) }}</span>
                             @if ($job->remote_type)
                                 <span class="pill">{{ strtoupper($job->remote_type) }}</span>
+                            @endif
+                            @if (\Illuminate\Support\Str::contains((string) $job->ai_reason, 'language penalty: fr advert'))
+                                <span class="pill language">FR PENALTY</span>
                             @endif
                             @if ($job->contract_type)
                                 <div class="muted" style="margin-top: 8px;">{{ $job->contract_type }}</div>

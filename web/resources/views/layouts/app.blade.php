@@ -52,12 +52,14 @@
         .pill.maybe { background: #f8eecf; border-color: #e6d28a; }
         .pill.reject { background: #f7ddd6; border-color: #e2b5a8; }
         .pill.status { background: #eef2f4; border-color: #d6dde2; }
+        .pill.language { background: #efe6fb; border-color: #ccb7ec; color: #5d3a8c; }
         .score { font-size: 1.2rem; font-weight: 700; }
         .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 18px 0; }
         .meta-card { padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: #fffcf7; }
         .pagination { padding: 16px; }
         .pagination svg { width: 16px; height: 16px; }
         .checkbox { display: flex; align-items: center; gap: 8px; padding-top: 28px; }
+        .compact-input { max-width: 120px; }
         @media (max-width: 720px) {
             .header { align-items: start; flex-direction: column; }
             th:nth-child(4), td:nth-child(4) { display: none; }
