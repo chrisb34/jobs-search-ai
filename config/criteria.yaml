@@ -9,10 +9,10 @@ desired:
     - senior software developer
   title_keyword_weight: 12
   tech_keywords:
-    - python
-    - ai
-    - llm
-    - machine learning
+    - php
+    - laravel
+    - java
+    - bootspring
     - data
     - automation
     - sqlite
