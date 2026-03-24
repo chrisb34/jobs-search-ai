@@ -277,3 +277,121 @@ def update_job_score(
         """,
         (score, reason, decision, utc_now(), source, source_job_id),
     )
+
+
+def query_jobs_for_shortlist(
+    conn: sqlite3.Connection,
+    *,
+    decisions: list[str],
+    status: str = "active",
+    limit: int = 200,
+) -> list[sqlite3.Row]:
+    placeholders = ", ".join("?" for _ in decisions)
+    params: list[object] = [status, *decisions, limit]
+    sql = f"""
+        SELECT
+            r.source,
+            r.source_job_id,
+            r.title,
+            r.company,
+            r.url,
+            r.location_raw,
+            n.canonical_job_key,
+            n.remote_type,
+            n.contract_type,
+            n.ai_score,
+            n.ai_reason,
+            n.ai_decision
+        FROM raw_jobs r
+        INNER JOIN normalized_jobs n
+            ON n.source = r.source AND n.source_job_id = r.source_job_id
+        WHERE r.status = ?
+          AND n.ai_decision IN ({placeholders})
+        ORDER BY n.ai_score DESC, r.last_seen_at DESC
+        LIMIT ?
+    """
+    return list(conn.execute(sql, params))
+
+
+def upsert_interesting_job(conn: sqlite3.Connection, row: sqlite3.Row) -> None:
+    now = utc_now()
+    conn.execute(
+        """
+        INSERT INTO interesting_jobs (
+            source, source_job_id, canonical_job_key, title, company, url,
+            location_raw, remote_type, contract_type, ai_score, ai_reason,
+            ai_decision, shortlist_status, promoted_at, updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', ?, ?)
+        ON CONFLICT(source, source_job_id) DO UPDATE SET
+            canonical_job_key = excluded.canonical_job_key,
+            title = excluded.title,
+            company = excluded.company,
+            url = excluded.url,
+            location_raw = excluded.location_raw,
+            remote_type = excluded.remote_type,
+            contract_type = excluded.contract_type,
+            ai_score = excluded.ai_score,
+            ai_reason = excluded.ai_reason,
+            ai_decision = excluded.ai_decision,
+            updated_at = excluded.updated_at
+        """,
+        (
+            row["source"],
+            row["source_job_id"],
+            row["canonical_job_key"],
+            row["title"],
+            row["company"],
+            row["url"],
+            row["location_raw"],
+            row["remote_type"],
+            row["contract_type"],
+            row["ai_score"],
+            row["ai_reason"],
+            row["ai_decision"],
+            now,
+            now,
+        ),
+    )
+
+
+def query_interesting_jobs(
+    conn: sqlite3.Connection,
+    *,
+    shortlist_status: str | None = None,
+    decision: str | None = None,
+    limit: int = 50,
+) -> list[sqlite3.Row]:
+    where_clauses: list[str] = []
+    params: list[object] = []
+    if shortlist_status:
+        where_clauses.append("shortlist_status = ?")
+        params.append(shortlist_status)
+    if decision:
+        where_clauses.append("ai_decision = ?")
+        params.append(decision)
+    params.append(limit)
+
+    where_sql = ""
+    if where_clauses:
+        where_sql = "WHERE " + " AND ".join(where_clauses)
+
+    sql = f"""
+        SELECT
+            source,
+            source_job_id,
+            title,
+            company,
+            location_raw,
+            remote_type,
+            ai_score,
+            ai_decision,
+            shortlist_status,
+            url,
+            updated_at
+        FROM interesting_jobs
+        {where_sql}
+        ORDER BY ai_score DESC, updated_at DESC
+        LIMIT ?
+    """
+    return list(conn.execute(sql, params))

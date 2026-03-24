@@ -11,6 +11,7 @@ Initial MVP for a job search scraper and SQLite pipeline.
 - Saved search config via YAML
 - Review/export command for active jobs
 - Rule-based scoring from criteria config
+- Shortlist promotion and review commands
 
 ## Quick start
 
@@ -46,6 +47,13 @@ python -m jobfinder.runs.score_jobs --criteria config/criteria.yaml --only-unsco
 sqlite3 data/jobs.db "select title_normalized, ai_score, ai_decision from normalized_jobs order by ai_score desc limit 10;"
 ```
 
+Promote shortlist jobs:
+
+```bash
+python -m jobfinder.runs.promote_shortlist --decisions high maybe
+python -m jobfinder.runs.review_shortlist --status new --format table
+```
+
 ## Schema overview
 
 `raw_jobs`
@@ -60,6 +68,11 @@ sqlite3 data/jobs.db "select title_normalized, ai_score, ai_decision from normal
 `scrape_runs`
 
 - Stores one record per run for traceability and lifecycle updates
+
+`interesting_jobs`
+
+- Stores promoted `high` and `maybe` jobs for ongoing review and application tracking
+- Starts each promoted row with `shortlist_status = 'new'`
 
 ## Notes
 
