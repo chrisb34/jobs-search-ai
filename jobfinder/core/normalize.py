@@ -81,6 +81,17 @@ def _normalize_remote_type(raw_job: dict) -> str | None:
     return None
 
 
+def _normalize_contract_type(value: object) -> str | None:
+    if value is None:
+        return None
+    if isinstance(value, list):
+        flattened = [str(item) for item in value if item is not None]
+        return ", ".join(flattened) if flattened else None
+    if isinstance(value, dict):
+        return json.dumps(value, ensure_ascii=True, sort_keys=True)
+    return str(value)
+
+
 def _tokenize_signature(value: str | None) -> list[str]:
     if not value:
         return []
@@ -166,7 +177,7 @@ def normalize_raw_job(raw_job: dict) -> dict:
         "country": country,
         "city": city,
         "remote_type": _normalize_remote_type(raw_job),
-        "contract_type": raw_job.get("contract_raw"),
+        "contract_type": _normalize_contract_type(raw_job.get("contract_raw")),
         "salary_currency": salary.get("currency"),
         "salary_min": salary.get("min"),
         "salary_max": salary.get("max"),

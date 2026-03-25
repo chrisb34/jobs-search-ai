@@ -16,6 +16,12 @@ def utc_now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
+def _db_text(value: object) -> object:
+    if isinstance(value, (dict, list)):
+        return json.dumps(value, ensure_ascii=True, sort_keys=True)
+    return value
+
+
 @contextmanager
 def connect(db_path: str | Path) -> Iterator[sqlite3.Connection]:
     conn = sqlite3.connect(str(db_path), timeout=30.0)
@@ -138,15 +144,15 @@ def upsert_raw_job(conn: sqlite3.Connection, run_id: int, job: dict) -> None:
             job["source"],
             job["source_job_id"],
             job["url"],
-            job.get("title"),
-            job.get("company"),
-            job.get("location_raw"),
-            job.get("description_raw"),
-            job.get("salary_raw"),
-            job.get("contract_raw"),
-            job.get("remote_raw"),
-            job.get("posted_at_raw"),
-            job.get("listed_at"),
+            _db_text(job.get("title")),
+            _db_text(job.get("company")),
+            _db_text(job.get("location_raw")),
+            _db_text(job.get("description_raw")),
+            _db_text(job.get("salary_raw")),
+            _db_text(job.get("contract_raw")),
+            _db_text(job.get("remote_raw")),
+            _db_text(job.get("posted_at_raw")),
+            _db_text(job.get("listed_at")),
             now,
             now,
             now,

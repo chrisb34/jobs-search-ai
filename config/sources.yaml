@@ -17,3 +17,6 @@ searches:
   - name: remotefr-manager
     source: remotefr
     search_url: "https://remotefr.com/competences/manager/"
+  - name: englishjobs-remote
+    source: englishjobs
+    search_url: "https://englishjobs.fr/jobs/remote"
