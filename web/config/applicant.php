@@ -2,36 +2,33 @@
 
 return [
     'profile' => [
-        'name' => 'Chris Backhouse',
-        'location' => 'France',
-        'work_authorisation' => 'Based in France and seeking roles compatible with working from France.',
+        'name' => 'Your Name',
+        'location' => 'Your Location',
+        'work_authorisation' => 'Describe where you are based and any work authorisation constraints.',
     ],
 
-    'summary' => 'Senior Tech Lead / Backend Engineer focused on API design, systems integration, and platform development. Strong experience delivering and structuring complex multi-system environments, with a focus on clarity, architecture, and predictable delivery.',
+    'summary' => 'Senior backend / platform engineer focused on APIs, systems integration, and delivery of reliable software in multi-team environments.',
 
     'core_skills' => [
         'Technical leadership',
+        'Backend development',
+        'API design',
         'Systems integration',
-        'API design (REST)',
-        'Backend development (Java, Spring Boot)',
-        'Middleware and distributed systems',
         'Architecture and technical discovery',
-        'Cross-team coordination',
-        'SQL',
+        'SQL and data modelling',
     ],
 
     'secondary_skills' => [
-        'Python (scripting, automation, prototyping)',
-        'AI-assisted development',
-        'Vue.js (working knowledge)',
-        'Symfony / PHP (past experience)',
-        'AWS and event-driven systems (RabbitMQ)',
+        'Python scripting',
+        'Frontend collaboration',
+        'Cloud infrastructure',
+        'Automation and tooling',
     ],
 
     'target_roles' => [
         'Tech Lead',
         'Senior Backend Engineer',
-        'Integration / Platform Engineer',
+        'Platform Engineer',
     ],
 
     'preferences' => [
@@ -48,8 +45,8 @@ return [
         ],
         'avoid' => [
             'Pure frontend roles',
-            'Feature-only roles without technical ownership',
-            'Unclear scope or weak engineering governance',
+            'Roles with unclear scope',
+            'Roles that require experience I do not have',
         ],
     ],
 
@@ -58,20 +55,18 @@ return [
         'Working across multiple teams and systems',
         'Balancing hands-on engineering with technical leadership',
         'Aligning product, architecture, and implementation',
-        'Pragmatic and delivery-focused',
     ],
 
     'achievements' => [
-        'Contributed to internationalisation of a Unified API platform integrating multiple systems',
-        'Introduced structured discovery phases improving delivery predictability',
-        'Delivered backend/middleware systems in Java across multiple backends',
-        'Worked on high-performance data platform (Symfony, Vue, RabbitMQ, AWS)',
+        'Replace these with concrete achievements from your own background',
+        'Keep them specific and factual',
+        'Use outcomes that are easy to defend in interview',
     ],
 
     'experience_notes' => [
-        'primary_language' => 'Java (primary production experience)',
-        'python' => 'Used for scripting, automation, and tooling (not primary language)',
-        'positioning' => 'Senior IC / Tech Lead with architectural scope, not people management',
+        'primary_language' => 'Describe your main production language or stack',
+        'secondary_languages' => 'Describe adjacent languages or frameworks honestly',
+        'positioning' => 'State how you want to be positioned, for example senior IC, tech lead, or manager',
     ],
 
     'tone' => [
@@ -85,19 +80,16 @@ return [
     ],
 
     'constraints' => [
-        'Do not present as a Python-first engineer',
-        'Do not present as a frontend specialist',
         'Do not invent experience',
-        'Avoid corporate clichés (passionate, visionary, etc.)',
-        'Do not mention internal company conflicts',
-        'Keep length ~250–400 words',
+        'Do not overstate seniority',
+        'Avoid corporate clichés',
+        'Keep length around 250-400 words',
     ],
 
     'customisation_rules' => [
         'Adapt wording to match the job description',
-        'Highlight 2–3 relevant strengths only',
-        'Reference company/product when possible',
-        'Emphasise integration/platform experience when relevant',
+        'Highlight 2-3 relevant strengths only',
+        'Reference the company or product when possible',
         'Keep it concise and specific',
     ],
 

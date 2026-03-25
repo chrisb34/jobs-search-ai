@@ -2,34 +2,36 @@ desired:
   title_keywords:
     - tech lead
     - technical lead
+    - backend engineer
+    - backend developer
+    - software engineer
+    - software developer
     - engineering manager
     - staff engineer
     - principal engineer
-    - senior software engineer
-    - senior software developer
-  title_keyword_weight: 12
+  title_keyword_weight: 10
   tech_keywords:
     - php
     - laravel
+    - symfony
     - java
-    - bootspring
-    - data
-    - automation
-    - sqlite
+    - spring
     - sql
     - api
     - backend
-  tech_keyword_weight: 6
+    - platform
+    - integration
+  tech_keyword_weight: 5
   seniority:
     - lead
     - senior
     - staff
     - principal
-  seniority_weight: 10
+  seniority_weight: 8
   remote_types:
     - remote
     - hybrid
-  remote_weight: 8
+  remote_weight: 6
   contract_types:
     - full-time
     - full time
@@ -47,7 +49,8 @@ desired:
   location_keywords:
     - emea
     - europe
-  location_weight: 5
+    - remote
+  location_weight: 4
 
 excluded:
   keywords:
@@ -55,18 +58,16 @@ excluded:
     - intern
     - volunteer
     - unpaid
-    - sales
     - recruiter
-    - crypto
-    - .NET
-  keyword_penalty: 20
+    - salesperson
+  keyword_penalty: 18
   language_penalties:
-    fr: 12
+    fr: 8
   seniority:
     - intern
     - junior
-  seniority_penalty: 25
+  seniority_penalty: 20
 
 thresholds:
-  high: 35
-  maybe: 20
+  high: 32
+  maybe: 18
