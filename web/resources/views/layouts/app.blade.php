@@ -41,6 +41,7 @@
         .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
         .button { display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--accent); background: var(--accent); color: #fff; padding: 10px 14px; border-radius: 999px; font-weight: 600; cursor: pointer; }
         .button.secondary { background: transparent; color: var(--accent); }
+        .header-links { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
         .table-wrap { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 14px 16px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
@@ -61,6 +62,8 @@
         .pagination svg { width: 16px; height: 16px; }
         .checkbox { display: flex; align-items: center; gap: 8px; padding-top: 28px; }
         .compact-input { max-width: 120px; }
+        .console-output { margin: 0; padding: 12px; border-radius: 12px; border: 1px solid var(--line); background: #faf7f1; overflow-x: auto; white-space: pre-wrap; line-height: 1.5; font-family: "SFMono-Regular", Menlo, Monaco, Consolas, monospace; font-size: 0.9rem; }
+        .console-error { background: #fff1ec; border-color: #e5beb1; }
         @media (max-width: 720px) {
             .header { align-items: start; flex-direction: column; }
             th:nth-child(4), td:nth-child(4) { display: none; }
@@ -74,7 +77,11 @@
                 <div class="eyebrow">Jobs AI Admin</div>
                 <h1>{{ $heading ?? 'Interesting Jobs' }}</h1>
             </div>
-            <div class="muted">{{ $subheading ?? 'Review and update shortlisted roles.' }}</div>
+            <div class="header-links">
+                <a class="button secondary" href="{{ route('interesting-jobs.index') }}">Shortlist</a>
+                <a class="button secondary" href="{{ route('console.index') }}">Console</a>
+                <div class="muted">{{ $subheading ?? 'Review and update shortlisted roles.' }}</div>
+            </div>
         </div>
         @if (session('status'))
             <div class="flash">{{ session('status') }}</div>
