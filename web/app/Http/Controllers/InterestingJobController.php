@@ -11,6 +11,11 @@ use RuntimeException;
 
 class InterestingJobController extends Controller
 {
+    private const SOURCES = [
+        'linkedin',
+        'wttj',
+    ];
+
     private const STATUSES = [
         'new',
         'reviewing',
@@ -31,6 +36,10 @@ class InterestingJobController extends Controller
             $query->where('shortlist_status', $request->string('status'));
         }
 
+        if ($request->filled('source')) {
+            $query->where('source', $request->string('source'));
+        }
+
         if ($request->filled('min_score')) {
             $query->where('ai_score', '>=', (float) $request->input('min_score'));
         }
@@ -45,6 +54,8 @@ class InterestingJobController extends Controller
                 $builder
                     ->where('title', 'like', "%{$search}%")
                     ->orWhere('company', 'like', "%{$search}%")
+                    ->orWhere('source_job_id', 'like', "%{$search}%")
+                    ->orWhere('source', 'like', "%{$search}%")
                     ->orWhere('location_raw', 'like', "%{$search}%")
                     ->orWhere('notes', 'like', "%{$search}%")
                     ->orWhere('description_snapshot', 'like', "%{$search}%");
@@ -53,8 +64,9 @@ class InterestingJobController extends Controller
 
         return view('interesting-jobs.index', [
             'jobs' => $query->paginate(25)->withQueryString(),
-            'filters' => $request->only(['decision', 'status', 'q', 'remote_only', 'min_score']),
+            'filters' => $request->only(['decision', 'status', 'source', 'q', 'remote_only', 'min_score']),
             'statusOptions' => self::STATUSES,
+            'sourceOptions' => self::SOURCES,
             'decisionOptions' => ['high', 'maybe', 'reject'],
         ]);
     }

@@ -29,6 +29,15 @@
             </select>
         </div>
         <div>
+            <label for="source">Source</label>
+            <select id="source" name="source">
+                <option value="">Any</option>
+                @foreach ($sourceOptions as $source)
+                    <option value="{{ $source }}" @selected(($filters['source'] ?? '') === $source)>{{ strtoupper($source) }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div>
             <label for="min_score">Min score</label>
             <input class="compact-input" id="min_score" type="text" name="min_score" value="{{ $filters['min_score'] ?? '' }}" placeholder="e.g. 35">
         </div>
@@ -60,6 +69,7 @@
                             <div class="job-title">{{ $job->title }}</div>
                             <div>{{ $job->company }}</div>
                             <div class="muted">{{ $job->location_raw ?: 'Location unknown' }}</div>
+                            <div class="muted">Source: {{ strtoupper($job->source) }} · {{ $job->source_job_id }}</div>
                             <div style="margin-top: 8px;">
                                 <a href="{{ $job->url }}" target="_blank" rel="noreferrer">Open listing</a>
                             </div>

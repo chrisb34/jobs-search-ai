@@ -23,6 +23,10 @@
             <div>{{ $job->contract_type ?: 'Unknown' }}</div>
         </div>
         <div class="meta-card">
+            <div class="eyebrow">Source</div>
+            <div>{{ strtoupper($job->source) }} · {{ $job->source_job_id }}</div>
+        </div>
+        <div class="meta-card">
             <div class="eyebrow">Snapshot</div>
             <div>{{ $job->snapshot_taken_at?->format('Y-m-d H:i') ?? 'Not captured yet' }}</div>
         </div>
