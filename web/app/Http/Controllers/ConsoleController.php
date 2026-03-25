@@ -19,6 +19,10 @@ class ConsoleController extends Controller
 
     public function run(Request $request, JobfinderConsole $console): RedirectResponse
     {
+        @set_time_limit(0);
+        @ini_set('max_execution_time', '0');
+        @ignore_user_abort(true);
+
         $validated = $request->validate([
             'action' => ['required', 'string'],
             'pages' => ['nullable', 'integer', 'min:1', 'max:10'],

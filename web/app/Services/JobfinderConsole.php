@@ -41,6 +41,7 @@ class JobfinderConsole
         $command = $this->buildCommand($action, $options);
         $process = new Process($command, $this->projectRoot);
         $process->setTimeout(600);
+        $process->setIdleTimeout(null);
         $process->run();
 
         return [
