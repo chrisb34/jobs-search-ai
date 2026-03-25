@@ -60,18 +60,18 @@ jobs-search-ai/
 ## Python setup
 
 ```bash
-cd /Users/chrisbackhouse/Sites/jobs-ai/jobs-search-ai
+cd <path-to-your-project>/jobs-search-ai
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e .
 ```
 
-The main database lives at [data/jobs.db](/Users/chrisbackhouse/Sites/jobs-ai/jobs-search-ai/data/jobs.db).
+The main database lives at `data/jobs.db`.
 
 ## Laravel setup
 
 ```bash
-cd /Users/chrisbackhouse/Sites/jobs-ai/jobs-search-ai/web
+cd <path-to-your-project>/jobs-search-ai/web
 cp .env.example .env
 composer install
 php artisan key:generate
@@ -82,7 +82,7 @@ The Laravel app reads the shared SQLite database at `../data/jobs.db`.
 If you use Valet:
 
 ```bash
-cd /Users/chrisbackhouse/Sites/jobs-ai/jobs-search-ai/web
+cd <path-to-your-project>/jobs-search-ai/web
 valet link jobs-ai
 ```
 
@@ -91,7 +91,7 @@ Then open `http://jobs-ai.test`.
 If you do not use Valet:
 
 ```bash
-cd /Users/chrisbackhouse/Sites/jobs-ai/jobs-search-ai/web
+cd <path-to-your-project>/jobs-search-ai/web
 php artisan serve
 ```
 
@@ -99,7 +99,7 @@ php artisan serve
 
 ### Saved searches
 
-Edit [sources.yaml](/Users/chrisbackhouse/Sites/jobs-ai/jobs-search-ai/config/sources.yaml) to define the search URLs you want to scrape.
+Edit `config/sources.yaml` to define the search URLs you want to scrape.
 
 Each entry has:
 
@@ -117,7 +117,7 @@ Example:
 
 ### Scoring criteria
 
-Edit [criteria.yaml](/Users/chrisbackhouse/Sites/jobs-ai/jobs-search-ai/config/criteria.yaml) to tune:
+Edit `config/criteria.yaml` to tune:
 
 - desired title keywords
 - desired tech keywords
@@ -131,7 +131,7 @@ The checked-in file is intentionally generic. Treat it as a starting point, not 
 
 ### Cover-letter profile
 
-Edit [applicant.php](/Users/chrisbackhouse/Sites/jobs-ai/jobs-search-ai/web/config/applicant.php) with your own:
+Edit `web/config/applicant.php` with your own:
 
 - name and location
 - summary
@@ -147,7 +147,7 @@ The checked-in version is a template and should be replaced with your own detail
 ### Run a single scrape
 
 ```bash
-cd /Users/chrisbackhouse/Sites/jobs-ai/jobs-search-ai
+cd <path-to-your-project>/jobs-search-ai
 python3 -m jobfinder.runs.run_jobs \
   --search-url 'https://www.linkedin.com/jobs/search/?keywords=tech%20lead' \
   --pages 3 \
@@ -219,7 +219,7 @@ The UI supports:
 
 Cover-letter generation is optional.
 
-Add these to [web/.env](/Users/chrisbackhouse/Sites/jobs-ai/jobs-search-ai/web/.env):
+Add these to `web/.env`:
 
 ```bash
 OPENAI_API_KEY=your_key_here
@@ -227,7 +227,7 @@ OPENAI_MODEL=gpt-5-mini
 OPENAI_BASE_URL=https://api.openai.com/v1
 ```
 
-Then update [applicant.php](/Users/chrisbackhouse/Sites/jobs-ai/jobs-search-ai/web/config/applicant.php) with your own details.
+Then update `web/config/applicant.php` with your own details.
 
 Generated drafts are stored in the `interesting_jobs` table.
 
@@ -236,7 +236,7 @@ Generated drafts are stored in the `interesting_jobs` table.
 Terminal:
 
 ```bash
-cd /Users/chrisbackhouse/Sites/jobs-ai/jobs-search-ai
+cd <path-to-your-project>/jobs-search-ai
 sqlite3 data/jobs.db
 ```
 
@@ -250,7 +250,7 @@ select count(*) from interesting_jobs;
 select title, company, ai_score, ai_decision from interesting_jobs order by ai_score desc limit 20;
 ```
 
-You can also open [jobs.db](/Users/chrisbackhouse/Sites/jobs-ai/jobs-search-ai/data/jobs.db) with DBeaver or DB Browser for SQLite.
+You can also open `data/jobs.db` with DBeaver or DB Browser for SQLite.
 
 ## macOS automation
 
@@ -268,7 +268,7 @@ Example script:
 
 ```bash
 #!/bin/bash
-cd /Users/chrisbackhouse/Sites/jobs-ai/jobs-search-ai || exit 1
+cd <path-to-your-project>/jobs-search-ai || exit 1
 source .venv/bin/activate
 python3 -m jobfinder.runs.run_saved_searches --config config/sources.yaml --pages 3 --auto-pages
 python3 -m jobfinder.runs.score_jobs --criteria config/criteria.yaml
