@@ -145,6 +145,12 @@ def _stringify_tech_stack(value: str) -> str:
 
 
 def _detect_language(job: dict) -> str | None:
+    normalized_language = (job.get("language") or "").strip().lower()
+    if normalized_language in {"fr", "french"}:
+        return "fr"
+    if normalized_language in {"en", "english"}:
+        return None
+
     description = (job.get("description_raw") or "").lower()
     title = (job.get("title") or "").lower()
 

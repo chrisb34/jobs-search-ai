@@ -275,6 +275,7 @@ def query_jobs_for_scoring(
             n.remote_type,
             n.contract_type,
             n.seniority,
+            n.language,
             n.tech_stack
         FROM raw_jobs r
         INNER JOIN normalized_jobs n
