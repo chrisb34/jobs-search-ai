@@ -9,6 +9,7 @@ from jobfinder.core.config import load_sources_config
 from jobfinder.core.normalize import normalize_raw_job
 from jobfinder.core.storage import connect, create_run, finish_run, init_db, upsert_normalized_job, upsert_raw_job
 from jobfinder.scrapers.linkedin import LinkedInScraper, LinkedInSearchConfig
+from jobfinder.scrapers.remotefr import RemoteFrScraper, RemoteFrSearchConfig
 from jobfinder.scrapers.wttj import WttjScraper, WttjSearchConfig
 
 
@@ -43,6 +44,9 @@ def _run_single_search(
     elif source == "wttj":
         config = WttjSearchConfig.from_search_url(search_url)
         scraper = WttjScraper(config=config, delay_seconds=delay_seconds)
+    elif source == "remotefr":
+        config = RemoteFrSearchConfig.from_search_url(search_url)
+        scraper = RemoteFrScraper(config=config, delay_seconds=delay_seconds)
     else:
         raise SystemExit(f"Unsupported source: {source}")
     run_id = create_run(conn, source=scraper.source, search_url=search_url)

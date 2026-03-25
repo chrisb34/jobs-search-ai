@@ -8,3 +8,6 @@ searches:
   - name: wttj-tech-lead-fr-remote
     source: wttj
     search_url: "https://www.welcometothejungle.com/fr/jobs?refinementList%5Boffices.country_code%5D%5B%5D=FR&refinementList%5Bcontract_type%5D%5B%5D=full_time&refinementList%5Bremote%5D%5B%5D=fulltime&query=tech%20lead&page=1&collections%5B%5D=remote_friendly"
+  - name: remotefr-php
+    source: remotefr
+    search_url: "https://remotefr.com/competences/php/"
