@@ -11,3 +11,9 @@ searches:
   - name: remotefr-php
     source: remotefr
     search_url: "https://remotefr.com/competences/php/"
+  - name: remotefr-java
+    source: remotefr
+    search_url: "https://remotefr.com/competences/java/"
+  - name: remotefr-manager
+    source: remotefr
+    search_url: "https://remotefr.com/competences/manager/"
