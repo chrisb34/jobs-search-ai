@@ -25,6 +25,12 @@ def _normalize_remote_type(raw_job: dict) -> str | None:
         return "remote"
     if "hybrid" in remote_raw:
         return "hybrid"
+    if remote_raw in {"fulltime", "punctual"}:
+        return "remote"
+    if remote_raw == "partial":
+        return "hybrid"
+    if remote_raw == "no":
+        return "onsite"
     if remote_raw:
         return "onsite"
     return None
@@ -84,7 +90,7 @@ def normalize_raw_job(raw_job: dict) -> dict:
         "salary_min": salary.get("min"),
         "salary_max": salary.get("max"),
         "seniority": _normalize_seniority(raw_job),
-        "language": None,
+        "language": extra.get("language"),
         "tech_stack": tech_stack_value,
         "ai_score": None,
         "ai_reason": None,

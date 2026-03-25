@@ -9,6 +9,7 @@ from jobfinder.core.config import load_sources_config
 from jobfinder.core.normalize import normalize_raw_job
 from jobfinder.core.storage import connect, create_run, finish_run, init_db, upsert_normalized_job, upsert_raw_job
 from jobfinder.scrapers.linkedin import LinkedInScraper, LinkedInSearchConfig
+from jobfinder.scrapers.wttj import WttjScraper, WttjSearchConfig
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -29,14 +30,21 @@ def build_parser() -> argparse.ArgumentParser:
 def _run_single_search(
     conn,
     *,
+    source: str,
     search_name: str,
     search_url: str,
     pages: int,
     auto_pages: bool,
     delay_seconds: float,
 ) -> int:
-    config = LinkedInSearchConfig.from_search_url(search_url)
-    scraper = LinkedInScraper(config=config, delay_seconds=delay_seconds)
+    if source == "linkedin":
+        config = LinkedInSearchConfig.from_search_url(search_url)
+        scraper = LinkedInScraper(config=config, delay_seconds=delay_seconds)
+    elif source == "wttj":
+        config = WttjSearchConfig.from_search_url(search_url)
+        scraper = WttjScraper(config=config, delay_seconds=delay_seconds)
+    else:
+        raise SystemExit(f"Unsupported source: {source}")
     run_id = create_run(conn, source=scraper.source, search_url=search_url)
     jobs_seen = 0
     try:
@@ -75,10 +83,9 @@ def main() -> int:
     with connect(db_path) as conn:
         init_db(conn)
         for search in searches:
-            if search.get("source") != "linkedin":
-                raise SystemExit(f"Unsupported source: {search.get('source')}")
             total_jobs += _run_single_search(
                 conn,
+                source=search.get("source", ""),
                 search_name=search.get("name", "unnamed"),
                 search_url=search["search_url"],
                 pages=args.pages,
