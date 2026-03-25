@@ -22,7 +22,12 @@
             </div>
             <div>
                 <label for="search_name">Search name</label>
-                <input id="search_name" type="text" name="search_name" placeholder="Optional saved search name">
+                <select id="search_name" name="search_name">
+                    <option value="">All saved searches</option>
+                    @foreach ($savedSearchNames as $savedSearchName)
+                        <option value="{{ $savedSearchName }}">{{ $savedSearchName }}</option>
+                    @endforeach
+                </select>
             </div>
             <div class="checkbox">
                 <input id="only_unscored" type="checkbox" name="only_unscored" value="1">

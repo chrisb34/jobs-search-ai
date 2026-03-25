@@ -4,6 +4,7 @@ namespace App\Services;
 
 use InvalidArgumentException;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Process\Process;
 
 class JobfinderConsole
@@ -35,6 +36,22 @@ class JobfinderConsole
                 'description' => 'Report shortlist gaps, duplicates, and stale rows.',
             ],
         ];
+    }
+
+    public function savedSearchNames(): array
+    {
+        $path = $this->projectRoot.'/config/sources.yaml';
+        if (! file_exists($path)) {
+            return [];
+        }
+
+        $parsed = Yaml::parseFile($path);
+        $searches = is_array($parsed['searches'] ?? null) ? $parsed['searches'] : [];
+
+        return array_values(array_filter(array_map(
+            static fn (mixed $search): ?string => is_array($search) && ! empty($search['name']) ? (string) $search['name'] : null,
+            $searches,
+        )));
     }
 
     public function run(string $action, array $options = []): array

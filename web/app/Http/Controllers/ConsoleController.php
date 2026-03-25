@@ -13,6 +13,7 @@ class ConsoleController extends Controller
     {
         return view('console.index', [
             'actions' => $console->actions(),
+            'savedSearchNames' => $console->savedSearchNames(),
             'result' => $request->session()->get('console_result'),
         ]);
     }
