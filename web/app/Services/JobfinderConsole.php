@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use InvalidArgumentException;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\Process\Process;
 
 class JobfinderConsole
@@ -38,6 +39,8 @@ class JobfinderConsole
 
     public function run(string $action, array $options = []): array
     {
+        $this->releaseSqliteConnection();
+
         $command = $this->buildCommand($action, $options);
         $process = new Process($command, $this->projectRoot);
         $process->setTimeout(600);
@@ -53,6 +56,16 @@ class JobfinderConsole
             'error_output' => trim($process->getErrorOutput()),
             'ran_at' => now()->toDateTimeString(),
         ];
+    }
+
+    private function releaseSqliteConnection(): void
+    {
+        try {
+            DB::disconnect('sqlite');
+            DB::purge('sqlite');
+        } catch (\Throwable) {
+            // Ignore disconnect failures and let the subprocess attempt the run.
+        }
     }
 
     private function buildCommand(string $action, array $options): array

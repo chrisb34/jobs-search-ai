@@ -18,8 +18,9 @@ def utc_now() -> str:
 
 @contextmanager
 def connect(db_path: str | Path) -> Iterator[sqlite3.Connection]:
-    conn = sqlite3.connect(str(db_path))
+    conn = sqlite3.connect(str(db_path), timeout=30.0)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA busy_timeout = 30000")
     try:
         yield conn
         conn.commit()
