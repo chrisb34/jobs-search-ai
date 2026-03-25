@@ -38,6 +38,7 @@
         label { display: block; font-size: 0.9rem; color: var(--muted); margin-bottom: 6px; }
         input[type="text"], textarea, select { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font: inherit; background: #fff; color: var(--ink); }
         textarea { min-height: 180px; resize: vertical; }
+        .config-editor { min-height: 360px; font-family: "SFMono-Regular", Menlo, Monaco, Consolas, monospace; font-size: 0.92rem; line-height: 1.5; }
         .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
         .button { display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--accent); background: var(--accent); color: #fff; padding: 10px 14px; border-radius: 999px; font-weight: 600; cursor: pointer; }
         .button.secondary { background: transparent; color: var(--accent); }
@@ -80,6 +81,7 @@
             <div class="header-links">
                 <a class="button secondary" href="{{ route('interesting-jobs.index') }}">Shortlist</a>
                 <a class="button secondary" href="{{ route('console.index') }}">Console</a>
+                <a class="button secondary" href="{{ route('jobfinder-config.index') }}">Config</a>
                 <div class="muted">{{ $subheading ?? 'Review and update shortlisted roles.' }}</div>
             </div>
         </div>
