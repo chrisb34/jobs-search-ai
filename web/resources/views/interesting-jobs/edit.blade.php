@@ -72,6 +72,22 @@
             </div>
         @endif
 
+        @if ($probableDuplicates->isNotEmpty())
+            <div style="margin-bottom: 18px;">
+                <label>Probable Duplicates</label>
+                <div class="muted">
+                    @foreach ($probableDuplicates as $duplicate)
+                        <div style="margin-bottom: 10px;">
+                            <a href="{{ route('interesting-jobs.edit', $duplicate) }}">{{ $duplicate->title }}</a>
+                            · {{ $duplicate->company }}
+                            · {{ strtoupper($duplicate->source) }} · {{ $duplicate->source_job_id }}
+                            · match {{ $duplicate->probable_duplicate_score }}
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
         <div style="margin-bottom: 18px;">
             <label>Salary Snapshot</label>
             <div class="muted">{{ $job->salary_snapshot ?: 'No salary snapshot recorded.' }}</div>

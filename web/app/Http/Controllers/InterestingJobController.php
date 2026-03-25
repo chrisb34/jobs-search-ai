@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\InterestingJob;
 use App\Services\CoverLetterGenerator;
+use App\Services\ProbableDuplicateFinder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -24,7 +25,7 @@ class InterestingJobController extends Controller
         'rejected',
     ];
 
-    public function index(Request $request): View
+    public function index(Request $request, ProbableDuplicateFinder $duplicateFinder): View
     {
         $query = InterestingJob::query()->orderByDesc('ai_score')->orderByDesc('updated_at');
 
@@ -62,8 +63,11 @@ class InterestingJobController extends Controller
             });
         }
 
+        $jobs = $query->paginate(25)->withQueryString();
+        $duplicateFinder->attachToPage($jobs->getCollection());
+
         return view('interesting-jobs.index', [
-            'jobs' => $query->paginate(25)->withQueryString(),
+            'jobs' => $jobs,
             'filters' => $request->only(['decision', 'status', 'source', 'q', 'remote_only', 'min_score']),
             'statusOptions' => self::STATUSES,
             'sourceOptions' => self::SOURCES,
@@ -71,11 +75,12 @@ class InterestingJobController extends Controller
         ]);
     }
 
-    public function edit(InterestingJob $interestingJob): View
+    public function edit(InterestingJob $interestingJob, ProbableDuplicateFinder $duplicateFinder): View
     {
         return view('interesting-jobs.edit', [
             'job' => $interestingJob,
             'statusOptions' => self::STATUSES,
+            'probableDuplicates' => $duplicateFinder->findForJob($interestingJob),
         ]);
     }
 

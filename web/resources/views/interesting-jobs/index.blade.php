@@ -86,6 +86,9 @@
                             @if (($job->duplicate_count ?? 1) > 1)
                                 <span class="pill duplicate">DUP x{{ $job->duplicate_count }}</span>
                             @endif
+                            @if (($job->probable_duplicate_count ?? 0) > 0)
+                                <span class="pill duplicate">POSSIBLE DUP {{ $job->probable_duplicate_count }}</span>
+                            @endif
                             @if ($job->contract_type)
                                 <div class="muted" style="margin-top: 8px;">{{ $job->contract_type }}</div>
                             @endif
@@ -98,6 +101,11 @@
                             @if (($job->duplicate_count ?? 1) > 1 && !empty($job->duplicate_sources_json))
                                 <div style="margin-top: 8px;">
                                     {{ collect($job->duplicate_sources_json)->pluck('source')->unique()->implode(', ') }}
+                                </div>
+                            @endif
+                            @if (($job->probable_duplicate_count ?? 0) > 0 && !empty($job->probable_duplicate_matches))
+                                <div style="margin-top: 8px;">
+                                    Possible: {{ $job->probable_duplicate_matches->pluck('title')->map(fn ($title) => \Illuminate\Support\Str::limit($title, 52))->implode(' · ') }}
                                 </div>
                             @endif
                         </td>
