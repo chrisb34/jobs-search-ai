@@ -1,0 +1,73 @@
+desired:
+  title_keywords:
+    - tech lead
+    - technical lead
+    - backend engineer
+    - backend developer
+    - software engineer
+    - software developer
+    - engineering manager
+    - staff engineer
+    - principal engineer
+  title_keyword_weight: 10
+  tech_keywords:
+    - php
+    - laravel
+    - symfony
+    - java
+    - spring
+    - sql
+    - api
+    - backend
+    - platform
+    - integration
+  tech_keyword_weight: 5
+  seniority:
+    - lead
+    - senior
+    - staff
+    - principal
+  seniority_weight: 8
+  remote_types:
+    - remote
+    - hybrid
+  remote_weight: 6
+  contract_types:
+    - full-time
+    - full time
+  contract_weight: 4
+  countries:
+    - france
+    - united kingdom
+    - germany
+    - netherlands
+  cities:
+    - paris
+    - london
+    - berlin
+    - amsterdam
+  location_keywords:
+    - emea
+    - europe
+    - remote
+  location_weight: 4
+
+excluded:
+  keywords:
+    - internship
+    - intern
+    - volunteer
+    - unpaid
+    - recruiter
+    - salesperson
+  keyword_penalty: 18
+  language_penalties:
+    fr: 8
+  seniority:
+    - intern
+    - junior
+  seniority_penalty: 20
+
+thresholds:
+  high: 32
+  maybe: 18
