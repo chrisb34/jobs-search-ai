@@ -587,3 +587,109 @@ def query_interesting_jobs(
         LIMIT ?
     """
     return list(conn.execute(sql, params))
+
+
+def query_shortlist_gap_jobs(
+    conn: sqlite3.Connection,
+    *,
+    decisions: list[str],
+    status: str = "active",
+    limit: int = 200,
+) -> list[sqlite3.Row]:
+    placeholders = ", ".join("?" for _ in decisions)
+    params: list[object] = [status, *decisions, limit]
+    sql = f"""
+        SELECT
+            r.source,
+            r.source_job_id,
+            r.title,
+            r.company,
+            r.location_raw,
+            r.url,
+            n.canonical_job_key,
+            n.ai_score,
+            n.ai_decision
+        FROM raw_jobs r
+        INNER JOIN normalized_jobs n
+            ON n.source = r.source AND n.source_job_id = r.source_job_id
+        LEFT JOIN interesting_jobs i
+            ON i.canonical_job_key = n.canonical_job_key
+        WHERE r.status = ?
+          AND n.ai_decision IN ({placeholders})
+          AND i.id IS NULL
+        ORDER BY n.ai_score DESC, r.last_seen_at DESC
+        LIMIT ?
+    """
+    return list(conn.execute(sql, params))
+
+
+def query_collapsed_duplicate_jobs(
+    conn: sqlite3.Connection,
+    *,
+    decisions: list[str],
+    status: str = "active",
+    limit: int = 200,
+) -> list[sqlite3.Row]:
+    placeholders = ", ".join("?" for _ in decisions)
+    params: list[object] = [status, *decisions, limit]
+    sql = f"""
+        WITH shortlist_candidates AS (
+            SELECT
+                r.source,
+                r.source_job_id,
+                r.title,
+                r.company,
+                r.url,
+                n.canonical_job_key,
+                n.ai_score,
+                n.ai_decision
+            FROM raw_jobs r
+            INNER JOIN normalized_jobs n
+                ON n.source = r.source AND n.source_job_id = r.source_job_id
+            WHERE r.status = ?
+              AND n.ai_decision IN ({placeholders})
+        )
+        SELECT
+            canonical_job_key,
+            COUNT(*) AS duplicate_count,
+            MAX(ai_score) AS top_score,
+            GROUP_CONCAT(source || ':' || source_job_id, ' | ') AS members,
+            GROUP_CONCAT(COALESCE(title, ''), ' | ') AS titles,
+            GROUP_CONCAT(COALESCE(company, ''), ' | ') AS companies
+        FROM shortlist_candidates
+        GROUP BY canonical_job_key
+        HAVING COUNT(*) > 1
+        ORDER BY duplicate_count DESC, top_score DESC
+        LIMIT ?
+    """
+    return list(conn.execute(sql, params))
+
+
+def query_stale_shortlist_jobs(
+    conn: sqlite3.Connection,
+    *,
+    limit: int = 200,
+) -> list[sqlite3.Row]:
+    sql = """
+        SELECT
+            i.id,
+            i.source,
+            i.source_job_id,
+            i.title,
+            i.company,
+            i.ai_score AS shortlist_ai_score,
+            i.ai_decision AS shortlist_ai_decision,
+            i.shortlist_status,
+            n.ai_score AS normalized_ai_score,
+            n.ai_decision AS normalized_ai_decision,
+            i.canonical_job_key
+        FROM interesting_jobs i
+        LEFT JOIN normalized_jobs n
+            ON n.source = i.source AND n.source_job_id = i.source_job_id
+        WHERE n.source_job_id IS NULL
+           OR COALESCE(i.ai_score, -9999) != COALESCE(n.ai_score, -9999)
+           OR COALESCE(i.ai_decision, '') != COALESCE(n.ai_decision, '')
+        ORDER BY i.updated_at DESC
+        LIMIT ?
+    """
+    return list(conn.execute(sql, (limit,)))
