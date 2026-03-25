@@ -8,6 +8,51 @@ import re
 import unicodedata
 
 
+TITLE_STOPWORDS = {
+    "a",
+    "an",
+    "and",
+    "au",
+    "cdi",
+    "de",
+    "des",
+    "du",
+    "en",
+    "for",
+    "f",
+    "freelance",
+    "full",
+    "h",
+    "hybrid",
+    "internship",
+    "intern",
+    "job",
+    "le",
+    "les",
+    "of",
+    "or",
+    "paris",
+    "part",
+    "remote",
+    "stage",
+    "the",
+    "time",
+}
+
+COMPANY_STOPWORDS = {
+    "company",
+    "groupe",
+    "group",
+    "labs",
+    "sas",
+    "sasu",
+    "sa",
+    "inc",
+    "llc",
+    "ltd",
+}
+
+
 def _slugify(value: str | None) -> str:
     if not value:
         return ""
@@ -36,6 +81,42 @@ def _normalize_remote_type(raw_job: dict) -> str | None:
     return None
 
 
+def _tokenize_signature(value: str | None) -> list[str]:
+    if not value:
+        return []
+    normalized = _slugify(value)
+    if not normalized:
+        return []
+    return [token for token in normalized.split("-") if token]
+
+
+def _title_signature(raw_job: dict) -> str:
+    tokens = _tokenize_signature(raw_job.get("title"))
+    filtered = [token for token in tokens if token not in TITLE_STOPWORDS and len(token) > 1]
+    if not filtered:
+        filtered = tokens
+    return "-".join(filtered[:8])
+
+
+def _company_signature(raw_job: dict) -> str:
+    tokens = _tokenize_signature(raw_job.get("company"))
+    filtered = [token for token in tokens if token not in COMPANY_STOPWORDS]
+    if not filtered:
+        filtered = tokens
+    return "-".join(filtered[:6])
+
+
+def _location_signature(raw_job: dict) -> str:
+    extra = raw_job.get("extra", {})
+    city = extra.get("city")
+    if city:
+        return _slugify(city)
+    remote_type = _normalize_remote_type(raw_job)
+    if remote_type:
+        return remote_type
+    return _slugify(raw_job.get("location_raw"))
+
+
 def _normalize_seniority(raw_job: dict) -> str | None:
     text = " ".join(
         filter(
@@ -55,9 +136,9 @@ def _normalize_seniority(raw_job: dict) -> str | None:
 
 def canonical_job_key(raw_job: dict) -> str:
     pieces = [
-        _slugify(raw_job.get("company")),
-        _slugify(raw_job.get("title")),
-        _slugify(raw_job.get("extra", {}).get("city") or raw_job.get("location_raw")),
+        _company_signature(raw_job),
+        _title_signature(raw_job),
+        _location_signature(raw_job),
     ]
     basis = "::".join(pieces)
     return hashlib.sha256(basis.encode("utf-8")).hexdigest()[:24]

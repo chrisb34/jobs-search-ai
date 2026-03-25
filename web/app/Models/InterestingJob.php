@@ -21,6 +21,8 @@ class InterestingJob extends Model
         'ai_score',
         'ai_reason',
         'ai_decision',
+        'duplicate_count',
+        'duplicate_sources_json',
         'shortlist_status',
         'notes',
         'description_snapshot',
@@ -41,6 +43,8 @@ class InterestingJob extends Model
     {
         return [
             'ai_score' => 'float',
+            'duplicate_count' => 'integer',
+            'duplicate_sources_json' => 'array',
             'source_snapshot_json' => 'array',
             'cover_letter_usage_json' => 'array',
             'snapshot_taken_at' => 'datetime',

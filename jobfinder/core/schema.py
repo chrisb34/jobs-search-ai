@@ -88,6 +88,8 @@ CREATE TABLE IF NOT EXISTS interesting_jobs (
     ai_score REAL,
     ai_reason TEXT,
     ai_decision TEXT NOT NULL,
+    duplicate_count INTEGER NOT NULL DEFAULT 1,
+    duplicate_sources_json TEXT,
     shortlist_status TEXT NOT NULL DEFAULT 'new',
     notes TEXT,
     description_snapshot TEXT,

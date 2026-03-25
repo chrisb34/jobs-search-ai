@@ -46,6 +46,8 @@ def _ensure_interesting_jobs_columns(conn: sqlite3.Connection) -> None:
         "cover_letter_generated_at": "TEXT",
         "cover_letter_model": "TEXT",
         "cover_letter_usage_json": "TEXT",
+        "duplicate_count": "INTEGER NOT NULL DEFAULT 1",
+        "duplicate_sources_json": "TEXT",
     }
     for column_name, column_type in required_columns.items():
         if column_name in existing_columns:
@@ -313,28 +315,70 @@ def query_jobs_for_shortlist(
     placeholders = ", ".join("?" for _ in decisions)
     params: list[object] = [status, *decisions, limit]
     sql = f"""
+        WITH ranked_jobs AS (
+            SELECT
+                r.source,
+                r.source_job_id,
+                r.title,
+                r.company,
+                r.url,
+                r.location_raw,
+                r.description_raw,
+                r.salary_raw,
+                r.extra_json,
+                r.last_seen_at,
+                n.canonical_job_key,
+                n.remote_type,
+                n.contract_type,
+                n.ai_score,
+                n.ai_reason,
+                n.ai_decision,
+                COUNT(*) OVER (PARTITION BY n.canonical_job_key) AS duplicate_count,
+                json_group_array(
+                    json_object(
+                        'source', r.source,
+                        'source_job_id', r.source_job_id,
+                        'url', r.url
+                    )
+                ) OVER (PARTITION BY n.canonical_job_key) AS duplicate_sources_json,
+                ROW_NUMBER() OVER (
+                    PARTITION BY n.canonical_job_key
+                    ORDER BY
+                        n.ai_score DESC,
+                        CASE r.source
+                            WHEN 'wttj' THEN 0
+                            WHEN 'linkedin' THEN 1
+                            ELSE 9
+                        END,
+                        r.last_seen_at DESC
+                ) AS row_number
+            FROM raw_jobs r
+            INNER JOIN normalized_jobs n
+                ON n.source = r.source AND n.source_job_id = r.source_job_id
+            WHERE r.status = ?
+              AND n.ai_decision IN ({placeholders})
+        )
         SELECT
-            r.source,
-            r.source_job_id,
-            r.title,
-            r.company,
-            r.url,
-            r.location_raw,
-            r.description_raw,
-            r.salary_raw,
-            r.extra_json,
-            n.canonical_job_key,
-            n.remote_type,
-            n.contract_type,
-            n.ai_score,
-            n.ai_reason,
-            n.ai_decision
-        FROM raw_jobs r
-        INNER JOIN normalized_jobs n
-            ON n.source = r.source AND n.source_job_id = r.source_job_id
-        WHERE r.status = ?
-          AND n.ai_decision IN ({placeholders})
-        ORDER BY n.ai_score DESC, r.last_seen_at DESC
+            source,
+            source_job_id,
+            title,
+            company,
+            url,
+            location_raw,
+            description_raw,
+            salary_raw,
+            extra_json,
+            canonical_job_key,
+            remote_type,
+            contract_type,
+            ai_score,
+            ai_reason,
+            ai_decision,
+            duplicate_count,
+            duplicate_sources_json
+        FROM ranked_jobs
+        WHERE row_number = 1
+        ORDER BY ai_score DESC, last_seen_at DESC
         LIMIT ?
     """
     return list(conn.execute(sql, params))
@@ -342,16 +386,94 @@ def query_jobs_for_shortlist(
 
 def upsert_interesting_job(conn: sqlite3.Connection, row: sqlite3.Row) -> None:
     now = utc_now()
+    duplicate_sources_json = row["duplicate_sources_json"]
+    existing = conn.execute(
+        """
+        SELECT id, shortlist_status, description_snapshot, salary_snapshot, source_snapshot_json, snapshot_taken_at
+        FROM interesting_jobs
+        WHERE canonical_job_key = ?
+        ORDER BY id
+        LIMIT 1
+        """,
+        (row["canonical_job_key"],),
+    ).fetchone()
+
+    if existing:
+        conn.execute(
+            """
+            UPDATE interesting_jobs
+            SET source = ?,
+                source_job_id = ?,
+                canonical_job_key = ?,
+                title = ?,
+                company = ?,
+                url = ?,
+                location_raw = ?,
+                remote_type = ?,
+                contract_type = ?,
+                ai_score = ?,
+                ai_reason = ?,
+                ai_decision = ?,
+                duplicate_count = ?,
+                duplicate_sources_json = ?,
+                description_snapshot = CASE
+                    WHEN shortlist_status IN ('new', 'reviewing') OR description_snapshot IS NULL
+                    THEN ?
+                    ELSE description_snapshot
+                END,
+                salary_snapshot = CASE
+                    WHEN shortlist_status IN ('new', 'reviewing') OR salary_snapshot IS NULL
+                    THEN ?
+                    ELSE salary_snapshot
+                END,
+                source_snapshot_json = CASE
+                    WHEN shortlist_status IN ('new', 'reviewing') OR source_snapshot_json IS NULL
+                    THEN ?
+                    ELSE source_snapshot_json
+                END,
+                snapshot_taken_at = CASE
+                    WHEN shortlist_status IN ('new', 'reviewing') OR snapshot_taken_at IS NULL
+                    THEN ?
+                    ELSE snapshot_taken_at
+                END,
+                updated_at = ?
+            WHERE id = ?
+            """,
+            (
+                row["source"],
+                row["source_job_id"],
+                row["canonical_job_key"],
+                row["title"],
+                row["company"],
+                row["url"],
+                row["location_raw"],
+                row["remote_type"],
+                row["contract_type"],
+                row["ai_score"],
+                row["ai_reason"],
+                row["ai_decision"],
+                row["duplicate_count"],
+                duplicate_sources_json,
+                row["description_raw"],
+                row["salary_raw"],
+                row["extra_json"],
+                now,
+                now,
+                existing["id"],
+            ),
+        )
+        return
+
     conn.execute(
         """
         INSERT INTO interesting_jobs (
             source, source_job_id, canonical_job_key, title, company, url,
             location_raw, remote_type, contract_type, ai_score, ai_reason,
-            ai_decision, shortlist_status, notes, description_snapshot,
-            salary_snapshot, source_snapshot_json, snapshot_taken_at,
-            promoted_at, updated_at
+            ai_decision, duplicate_count, duplicate_sources_json, shortlist_status,
+            notes, description_snapshot, salary_snapshot, source_snapshot_json,
+            snapshot_taken_at, promoted_at, updated_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', NULL, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', NULL, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(source, source_job_id) DO UPDATE SET
             canonical_job_key = excluded.canonical_job_key,
             title = excluded.title,
@@ -363,6 +485,8 @@ def upsert_interesting_job(conn: sqlite3.Connection, row: sqlite3.Row) -> None:
             ai_score = excluded.ai_score,
             ai_reason = excluded.ai_reason,
             ai_decision = excluded.ai_decision,
+            duplicate_count = excluded.duplicate_count,
+            duplicate_sources_json = excluded.duplicate_sources_json,
             description_snapshot = CASE
                 WHEN interesting_jobs.shortlist_status IN ('new', 'reviewing')
                     OR interesting_jobs.description_snapshot IS NULL
@@ -402,6 +526,8 @@ def upsert_interesting_job(conn: sqlite3.Connection, row: sqlite3.Row) -> None:
             row["ai_score"],
             row["ai_reason"],
             row["ai_decision"],
+            row["duplicate_count"],
+            duplicate_sources_json,
             row["description_raw"],
             row["salary_raw"],
             row["extra_json"],
@@ -437,12 +563,15 @@ def query_interesting_jobs(
         SELECT
             source,
             source_job_id,
+            canonical_job_key,
             title,
             company,
             location_raw,
             remote_type,
             ai_score,
             ai_decision,
+            duplicate_count,
+            duplicate_sources_json,
             shortlist_status,
             description_snapshot,
             salary_snapshot,

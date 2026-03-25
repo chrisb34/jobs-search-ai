@@ -73,6 +73,9 @@
                             @if (\Illuminate\Support\Str::contains((string) $job->ai_reason, 'language penalty: fr advert'))
                                 <span class="pill language">FR PENALTY</span>
                             @endif
+                            @if (($job->duplicate_count ?? 1) > 1)
+                                <span class="pill duplicate">DUP x{{ $job->duplicate_count }}</span>
+                            @endif
                             @if ($job->contract_type)
                                 <div class="muted" style="margin-top: 8px;">{{ $job->contract_type }}</div>
                             @endif
@@ -82,6 +85,11 @@
                         </td>
                         <td class="muted">
                             {{ \Illuminate\Support\Str::limit($job->notes ?: $job->ai_reason, 160) }}
+                            @if (($job->duplicate_count ?? 1) > 1 && !empty($job->duplicate_sources_json))
+                                <div style="margin-top: 8px;">
+                                    {{ collect($job->duplicate_sources_json)->pluck('source')->unique()->implode(', ') }}
+                                </div>
+                            @endif
                         </td>
                         <td>
                             <a class="button secondary" href="{{ route('interesting-jobs.edit', $job) }}">Edit</a>
