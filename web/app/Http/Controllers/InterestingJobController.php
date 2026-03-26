@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\InterestingJob;
 use App\Services\CoverLetterGenerator;
 use App\Services\ProbableDuplicateFinder;
+use Illuminate\Support\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use RuntimeException;
 
@@ -27,7 +29,23 @@ class InterestingJobController extends Controller
 
     public function index(Request $request, ProbableDuplicateFinder $duplicateFinder): View
     {
-        $query = InterestingJob::query()->orderByDesc('ai_score')->orderByDesc('updated_at');
+        $query = InterestingJob::query()
+            ->leftJoin('normalized_jobs as n', function ($join): void {
+                $join
+                    ->on('n.source', '=', 'interesting_jobs.source')
+                    ->on('n.source_job_id', '=', 'interesting_jobs.source_job_id');
+            })
+            ->select(
+                'interesting_jobs.*',
+                'n.ai_llm_score',
+                'n.ai_llm_reason',
+                'n.ai_llm_decision',
+                'n.ai_llm_model',
+                'n.ai_llm_usage_json',
+                'n.ai_llm_scored_at',
+            )
+            ->orderByDesc('interesting_jobs.ai_score')
+            ->orderByDesc('interesting_jobs.updated_at');
 
         if ($request->filled('decision')) {
             $query->where('ai_decision', $request->string('decision'));
@@ -77,6 +95,34 @@ class InterestingJobController extends Controller
 
     public function edit(InterestingJob $interestingJob, ProbableDuplicateFinder $duplicateFinder): View
     {
+        $llmFields = DB::table('normalized_jobs')
+            ->select(
+                'ai_llm_score',
+                'ai_llm_reason',
+                'ai_llm_decision',
+                'ai_llm_model',
+                'ai_llm_usage_json',
+                'ai_llm_scored_at',
+            )
+            ->where('source', $interestingJob->source)
+            ->where('source_job_id', $interestingJob->source_job_id)
+            ->first();
+
+        if ($llmFields) {
+            $interestingJob->setAttribute('ai_llm_score', $llmFields->ai_llm_score);
+            $interestingJob->setAttribute('ai_llm_reason', $llmFields->ai_llm_reason);
+            $interestingJob->setAttribute('ai_llm_decision', $llmFields->ai_llm_decision);
+            $interestingJob->setAttribute('ai_llm_model', $llmFields->ai_llm_model);
+            $interestingJob->setAttribute(
+                'ai_llm_usage_json',
+                is_string($llmFields->ai_llm_usage_json) ? json_decode($llmFields->ai_llm_usage_json, true) : null
+            );
+            $interestingJob->setAttribute(
+                'ai_llm_scored_at',
+                $llmFields->ai_llm_scored_at ? Carbon::parse($llmFields->ai_llm_scored_at) : null
+            );
+        }
+
         return view('interesting-jobs.edit', [
             'job' => $interestingJob,
             'statusOptions' => self::STATUSES,
