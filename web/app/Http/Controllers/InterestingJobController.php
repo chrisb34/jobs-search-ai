@@ -48,36 +48,36 @@ class InterestingJobController extends Controller
             ->orderByDesc('interesting_jobs.updated_at');
 
         if ($request->filled('decision')) {
-            $query->where('ai_decision', $request->string('decision'));
+            $query->where('interesting_jobs.ai_decision', $request->string('decision'));
         }
 
         if ($request->filled('status')) {
-            $query->where('shortlist_status', $request->string('status'));
+            $query->where('interesting_jobs.shortlist_status', $request->string('status'));
         }
 
         if ($request->filled('source')) {
-            $query->where('source', $request->string('source'));
+            $query->where('interesting_jobs.source', $request->string('source'));
         }
 
         if ($request->filled('min_score')) {
-            $query->where('ai_score', '>=', (float) $request->input('min_score'));
+            $query->where('interesting_jobs.ai_score', '>=', (float) $request->input('min_score'));
         }
 
         if ($request->boolean('remote_only')) {
-            $query->where('remote_type', 'remote');
+            $query->where('interesting_jobs.remote_type', 'remote');
         }
 
         if ($request->filled('q')) {
             $search = trim((string) $request->string('q'));
             $query->where(function ($builder) use ($search): void {
                 $builder
-                    ->where('title', 'like', "%{$search}%")
-                    ->orWhere('company', 'like', "%{$search}%")
-                    ->orWhere('source_job_id', 'like', "%{$search}%")
-                    ->orWhere('source', 'like', "%{$search}%")
-                    ->orWhere('location_raw', 'like', "%{$search}%")
-                    ->orWhere('notes', 'like', "%{$search}%")
-                    ->orWhere('description_snapshot', 'like', "%{$search}%");
+                    ->where('interesting_jobs.title', 'like', "%{$search}%")
+                    ->orWhere('interesting_jobs.company', 'like', "%{$search}%")
+                    ->orWhere('interesting_jobs.source_job_id', 'like', "%{$search}%")
+                    ->orWhere('interesting_jobs.source', 'like', "%{$search}%")
+                    ->orWhere('interesting_jobs.location_raw', 'like', "%{$search}%")
+                    ->orWhere('interesting_jobs.notes', 'like', "%{$search}%")
+                    ->orWhere('interesting_jobs.description_snapshot', 'like', "%{$search}%");
             });
         }
 
