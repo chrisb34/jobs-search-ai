@@ -36,7 +36,29 @@ def connect(db_path: str | Path) -> Iterator[sqlite3.Connection]:
 
 def init_db(conn: sqlite3.Connection) -> None:
     conn.executescript(SCHEMA_SQL)
+    _ensure_normalized_jobs_columns(conn)
     _ensure_interesting_jobs_columns(conn)
+
+
+def _ensure_normalized_jobs_columns(conn: sqlite3.Connection) -> None:
+    existing_columns = {
+        row["name"]
+        for row in conn.execute("PRAGMA table_info(normalized_jobs)")
+    }
+    required_columns = {
+        "ai_llm_score": "REAL",
+        "ai_llm_reason": "TEXT",
+        "ai_llm_decision": "TEXT",
+        "ai_llm_model": "TEXT",
+        "ai_llm_usage_json": "TEXT",
+        "ai_llm_scored_at": "TEXT",
+    }
+    for column_name, column_type in required_columns.items():
+        if column_name in existing_columns:
+            continue
+        conn.execute(
+            f"ALTER TABLE normalized_jobs ADD COLUMN {column_name} {column_type}"
+        )
 
 
 def _ensure_interesting_jobs_columns(conn: sqlite3.Connection) -> None:
@@ -294,6 +316,52 @@ def query_jobs_for_scoring(
     return list(conn.execute(sql, params))
 
 
+def query_jobs_for_llm_scoring(
+    conn: sqlite3.Connection,
+    *,
+    status: str = "active",
+    limit: int = 50,
+    min_rule_score: float = 35.0,
+    only_unscored: bool = False,
+) -> list[sqlite3.Row]:
+    where_clauses = ["r.status = ?", "COALESCE(n.ai_score, 0) >= ?"]
+    params: list[object] = [status, min_rule_score]
+    if only_unscored:
+        where_clauses.append("n.ai_llm_decision IS NULL")
+    params.append(limit)
+    sql = f"""
+        SELECT
+            r.source,
+            r.source_job_id,
+            r.title,
+            r.company,
+            r.location_raw,
+            r.description_raw,
+            r.salary_raw,
+            r.contract_raw,
+            r.url,
+            n.title_normalized,
+            n.company_normalized,
+            n.country,
+            n.city,
+            n.remote_type,
+            n.contract_type,
+            n.seniority,
+            n.language,
+            n.tech_stack,
+            n.ai_score,
+            n.ai_reason,
+            n.ai_decision
+        FROM raw_jobs r
+        INNER JOIN normalized_jobs n
+            ON n.source = r.source AND n.source_job_id = r.source_job_id
+        WHERE {' AND '.join(where_clauses)}
+        ORDER BY n.ai_score DESC, r.last_seen_at DESC
+        LIMIT ?
+    """
+    return list(conn.execute(sql, params))
+
+
 def update_job_score(
     conn: sqlite3.Connection,
     *,
@@ -310,6 +378,43 @@ def update_job_score(
         WHERE source = ? AND source_job_id = ?
         """,
         (score, reason, decision, utc_now(), source, source_job_id),
+    )
+
+
+def update_job_llm_score(
+    conn: sqlite3.Connection,
+    *,
+    source: str,
+    source_job_id: str,
+    score: float,
+    decision: str,
+    reason: str,
+    model: str,
+    usage: dict | None,
+) -> None:
+    conn.execute(
+        """
+        UPDATE normalized_jobs
+        SET ai_llm_score = ?,
+            ai_llm_reason = ?,
+            ai_llm_decision = ?,
+            ai_llm_model = ?,
+            ai_llm_usage_json = ?,
+            ai_llm_scored_at = ?,
+            updated_at = ?
+        WHERE source = ? AND source_job_id = ?
+        """,
+        (
+            score,
+            reason,
+            decision,
+            model,
+            json.dumps(usage, ensure_ascii=True, sort_keys=True) if usage else None,
+            utc_now(),
+            utc_now(),
+            source,
+            source_job_id,
+        ),
     )
 
 

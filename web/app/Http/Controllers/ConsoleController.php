@@ -29,6 +29,7 @@ class ConsoleController extends Controller
             'pages' => ['nullable', 'integer', 'min:1', 'max:10'],
             'search_name' => ['nullable', 'string', 'max:120'],
             'only_unscored' => ['nullable', 'in:1'],
+            'min_rule_score' => ['nullable', 'numeric', 'min:0', 'max:100'],
         ]);
 
         $result = $console->run(
@@ -37,6 +38,7 @@ class ConsoleController extends Controller
                 'pages' => (int) ($validated['pages'] ?? 1),
                 'search_name' => $validated['search_name'] ?? null,
                 'only_unscored' => ($validated['only_unscored'] ?? null) === '1',
+                'min_rule_score' => (float) ($validated['min_rule_score'] ?? 35),
             ],
         );
 

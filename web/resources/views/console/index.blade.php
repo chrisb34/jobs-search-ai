@@ -29,6 +29,10 @@
                     @endforeach
                 </select>
             </div>
+            <div>
+                <label for="min_rule_score">Min rule score</label>
+                <input id="min_rule_score" type="text" name="min_rule_score" value="35" placeholder="Used for LLM scoring">
+            </div>
             <div class="checkbox">
                 <input id="only_unscored" type="checkbox" name="only_unscored" value="1">
                 <label for="only_unscored" style="margin: 0;">Only unscored</label>
