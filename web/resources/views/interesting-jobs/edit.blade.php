@@ -11,8 +11,28 @@
             <div><span class="pill {{ $job->ai_decision }}">{{ strtoupper($job->ai_decision) }}</span></div>
         </div>
         <div class="meta-card">
+            <div class="eyebrow">LLM Decision</div>
+            <div>
+                @if ($job->ai_llm_decision)
+                    <span class="pill {{ $job->ai_llm_decision }}">{{ strtoupper($job->ai_llm_decision) }}</span>
+                @else
+                    Not scored
+                @endif
+            </div>
+        </div>
+        <div class="meta-card">
             <div class="eyebrow">Score</div>
             <div class="score">{{ number_format((float) $job->ai_score, 0) }}</div>
+        </div>
+        <div class="meta-card">
+            <div class="eyebrow">LLM Score</div>
+            <div>
+                @if (!is_null($job->ai_llm_score))
+                    <span class="score">{{ number_format((float) $job->ai_llm_score, 0) }}</span>
+                @else
+                    Not scored
+                @endif
+            </div>
         </div>
         <div class="meta-card">
             <div class="eyebrow">Remote</div>
@@ -59,6 +79,29 @@
         <div style="margin-bottom: 18px;">
             <label>AI Reason</label>
             <div class="muted">{{ $job->ai_reason ?: 'No scoring reason recorded.' }}</div>
+        </div>
+
+        <div style="margin-bottom: 18px;">
+            <label>LLM Reason</label>
+            <div class="muted">{{ $job->ai_llm_reason ?: 'No LLM scoring reason recorded.' }}</div>
+            @if ($job->ai_llm_scored_at || $job->ai_llm_model)
+                <div class="muted" style="margin-top: 8px;">
+                    @if ($job->ai_llm_scored_at)
+                        LLM scored {{ $job->ai_llm_scored_at->format('Y-m-d H:i') }}
+                    @endif
+                    @if ($job->ai_llm_model)
+                        · {{ $job->ai_llm_model }}
+                    @endif
+                </div>
+            @endif
+            @if ($job->ai_llm_usage_json)
+                <div class="muted" style="margin-top: 8px;">
+                    Token usage:
+                    input {{ $job->ai_llm_usage_json['input_tokens'] ?? '?' }},
+                    output {{ $job->ai_llm_usage_json['output_tokens'] ?? '?' }},
+                    total {{ $job->ai_llm_usage_json['total_tokens'] ?? '?' }}
+                </div>
+            @endif
         </div>
 
         @if (($job->duplicate_count ?? 1) > 1 && !empty($job->duplicate_sources_json))

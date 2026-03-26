@@ -76,6 +76,9 @@
                         </td>
                         <td>
                             <span class="pill {{ $job->ai_decision }}">{{ strtoupper($job->ai_decision) }}</span>
+                            @if ($job->ai_llm_decision)
+                                <span class="pill {{ $job->ai_llm_decision }}">LLM {{ strtoupper($job->ai_llm_decision) }}</span>
+                            @endif
                             <span class="pill status">{{ strtoupper($job->shortlist_status) }}</span>
                             @if ($job->remote_type)
                                 <span class="pill">{{ strtoupper($job->remote_type) }}</span>
@@ -95,9 +98,14 @@
                         </td>
                         <td>
                             <div class="score">{{ number_format((float) $job->ai_score, 0) }}</div>
+                            <div class="muted" style="margin-top: 6px;">Rule</div>
+                            @if (!is_null($job->ai_llm_score))
+                                <div class="score" style="margin-top: 12px;">{{ number_format((float) $job->ai_llm_score, 0) }}</div>
+                                <div class="muted" style="margin-top: 6px;">LLM</div>
+                            @endif
                         </td>
                         <td class="muted">
-                            {{ \Illuminate\Support\Str::limit($job->notes ?: $job->ai_reason, 160) }}
+                            {{ \Illuminate\Support\Str::limit($job->notes ?: ($job->ai_llm_reason ?: $job->ai_reason), 160) }}
                             @if (($job->duplicate_count ?? 1) > 1 && !empty($job->duplicate_sources_json))
                                 <div style="margin-top: 8px;">
                                     {{ collect($job->duplicate_sources_json)->pluck('source')->unique()->implode(', ') }}
