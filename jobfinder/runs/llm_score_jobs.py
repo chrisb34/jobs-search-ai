@@ -32,6 +32,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Only score jobs that do not already have ai_llm_decision",
     )
+    parser.add_argument(
+        "--shortlist-status",
+        default="new",
+        help="Only score jobs in interesting_jobs with this shortlist status; use 'any' to disable",
+    )
     return parser
 
 
@@ -48,6 +53,7 @@ def main() -> int:
             limit=args.limit,
             min_rule_score=args.min_rule_score,
             only_unscored=args.only_unscored,
+            shortlist_status=None if args.shortlist_status == "any" else args.shortlist_status,
         )
 
         for row in rows:

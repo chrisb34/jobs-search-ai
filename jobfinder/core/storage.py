@@ -323,11 +323,22 @@ def query_jobs_for_llm_scoring(
     limit: int = 50,
     min_rule_score: float = 35.0,
     only_unscored: bool = False,
+    shortlist_status: str | None = "new",
 ) -> list[sqlite3.Row]:
     where_clauses = ["r.status = ?", "COALESCE(n.ai_score, 0) >= ?"]
     params: list[object] = [status, min_rule_score]
     if only_unscored:
         where_clauses.append("n.ai_llm_decision IS NULL")
+    shortlist_join = ""
+    shortlist_select = "NULL AS shortlist_status"
+    if shortlist_status:
+        shortlist_join = """
+        INNER JOIN interesting_jobs i
+            ON i.source = n.source AND i.source_job_id = n.source_job_id
+        """
+        shortlist_select = "i.shortlist_status"
+        where_clauses.append("i.shortlist_status = ?")
+        params.append(shortlist_status)
     params.append(limit)
     sql = f"""
         SELECT
@@ -351,10 +362,12 @@ def query_jobs_for_llm_scoring(
             n.tech_stack,
             n.ai_score,
             n.ai_reason,
-            n.ai_decision
+            n.ai_decision,
+            {shortlist_select}
         FROM raw_jobs r
         INNER JOIN normalized_jobs n
             ON n.source = r.source AND n.source_job_id = r.source_job_id
+        {shortlist_join}
         WHERE {' AND '.join(where_clauses)}
         ORDER BY n.ai_score DESC, r.last_seen_at DESC
         LIMIT ?
