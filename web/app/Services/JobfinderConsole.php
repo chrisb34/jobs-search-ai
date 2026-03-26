@@ -27,6 +27,10 @@ class JobfinderConsole
                 'label' => 'Score Jobs',
                 'description' => 'Apply rule-based scoring to active jobs.',
             ],
+            'llm_score_jobs' => [
+                'label' => 'LLM Score Jobs',
+                'description' => 'Apply an OpenAI second-pass score to jobs above a minimum rule score.',
+            ],
             'promote_shortlist' => [
                 'label' => 'Promote Shortlist',
                 'description' => 'Promote high/maybe jobs into interesting_jobs.',
@@ -90,10 +94,12 @@ class JobfinderConsole
         $pages = max(1, (int) ($options['pages'] ?? 1));
         $searchName = trim((string) ($options['search_name'] ?? ''));
         $onlyUnscored = (bool) ($options['only_unscored'] ?? false);
+        $minRuleScore = (float) ($options['min_rule_score'] ?? 35);
 
         return match ($action) {
             'run_saved_searches' => $this->buildRunSavedSearchesCommand($pages, $searchName),
             'score_jobs' => $this->buildScoreJobsCommand($onlyUnscored),
+            'llm_score_jobs' => $this->buildLlmScoreJobsCommand($onlyUnscored, $minRuleScore),
             'promote_shortlist' => [
                 'python3',
                 '-m',
@@ -152,6 +158,27 @@ class JobfinderConsole
             'config/criteria.yaml',
             '--db-path',
             'data/jobs.db',
+        ];
+
+        if ($onlyUnscored) {
+            $command[] = '--only-unscored';
+        }
+
+        return $command;
+    }
+
+    private function buildLlmScoreJobsCommand(bool $onlyUnscored, float $minRuleScore): array
+    {
+        $command = [
+            'python3',
+            '-m',
+            'jobfinder.runs.llm_score_jobs',
+            '--criteria',
+            'config/criteria.yaml',
+            '--db-path',
+            'data/jobs.db',
+            '--min-rule-score',
+            (string) $minRuleScore,
         ];
 
         if ($onlyUnscored) {

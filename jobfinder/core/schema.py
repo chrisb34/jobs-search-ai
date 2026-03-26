@@ -67,6 +67,12 @@ CREATE TABLE IF NOT EXISTS normalized_jobs (
     ai_score REAL,
     ai_reason TEXT,
     ai_decision TEXT,
+    ai_llm_score REAL,
+    ai_llm_reason TEXT,
+    ai_llm_decision TEXT,
+    ai_llm_model TEXT,
+    ai_llm_usage_json TEXT,
+    ai_llm_scored_at TEXT,
     updated_at TEXT NOT NULL,
     UNIQUE(source, source_job_id)
 );
