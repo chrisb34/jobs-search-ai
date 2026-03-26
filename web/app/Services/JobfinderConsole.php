@@ -29,7 +29,7 @@ class JobfinderConsole
             ],
             'llm_score_jobs' => [
                 'label' => 'LLM Score Jobs',
-                'description' => 'Apply an OpenAI second-pass score to jobs above a minimum rule score.',
+                'description' => 'Apply an OpenAI second-pass score to new shortlist jobs above a minimum rule score.',
             ],
             'promote_shortlist' => [
                 'label' => 'Promote Shortlist',
@@ -179,6 +179,8 @@ class JobfinderConsole
             'data/jobs.db',
             '--min-rule-score',
             (string) $minRuleScore,
+            '--shortlist-status',
+            'new',
         ];
 
         if ($onlyUnscored) {
