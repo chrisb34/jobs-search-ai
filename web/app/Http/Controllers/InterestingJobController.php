@@ -29,6 +29,8 @@ class InterestingJobController extends Controller
 
     public function index(Request $request, ProbableDuplicateFinder $duplicateFinder): View
     {
+        $defaultStatus = $request->filled('status') ? (string) $request->string('status') : 'new';
+
         $query = InterestingJob::query()
             ->leftJoin('normalized_jobs as n', function ($join): void {
                 $join
@@ -51,8 +53,8 @@ class InterestingJobController extends Controller
             $query->where('interesting_jobs.ai_decision', $request->string('decision'));
         }
 
-        if ($request->filled('status')) {
-            $query->where('interesting_jobs.shortlist_status', $request->string('status'));
+        if ($defaultStatus !== '') {
+            $query->where('interesting_jobs.shortlist_status', $defaultStatus);
         }
 
         if ($request->filled('source')) {
@@ -86,7 +88,10 @@ class InterestingJobController extends Controller
 
         return view('interesting-jobs.index', [
             'jobs' => $jobs,
-            'filters' => $request->only(['decision', 'status', 'source', 'q', 'remote_only', 'min_score']),
+            'filters' => array_merge(
+                $request->only(['decision', 'status', 'source', 'q', 'remote_only', 'min_score']),
+                ['status' => $defaultStatus],
+            ),
             'statusOptions' => self::STATUSES,
             'sourceOptions' => self::SOURCES,
             'decisionOptions' => ['high', 'maybe', 'reject'],
