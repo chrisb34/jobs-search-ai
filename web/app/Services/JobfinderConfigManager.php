@@ -59,8 +59,8 @@ class JobfinderConfigManager
                 'path' => $projectRoot.'/config/sources.yaml',
             ],
             'criteria' => [
-                'label' => 'Criteria',
-                'path' => $projectRoot.'/config/criteria.yaml',
+                'label' => 'Criteria (Local Override)',
+                'path' => $projectRoot.'/config/criteria.local.yaml',
             ],
         ];
     }

@@ -117,7 +117,11 @@ Example:
 
 ### Scoring criteria
 
-Edit `config/criteria.yaml` to tune:
+Edit `config/criteria.local.yaml` to tune your local scoring preferences.
+
+The app will automatically prefer `config/criteria.local.yaml` over the tracked `config/criteria.yaml` template when the local file exists.
+
+Tune:
 
 - desired title keywords
 - desired tech keywords
@@ -127,11 +131,11 @@ Edit `config/criteria.yaml` to tune:
 - language penalties
 - scoring thresholds
 
-The checked-in file is intentionally generic. Treat it as a starting point, not a final profile.
+The checked-in `config/criteria.yaml` file is intentionally generic. Treat it as a tracked template, not a final profile.
 
 ### Cover-letter profile
 
-Edit `web/config/applicant.php` with your own:
+Edit `web/config/applicant.local.php` with your own:
 
 - name and location
 - summary
@@ -140,7 +144,7 @@ Edit `web/config/applicant.php` with your own:
 - tone
 - constraints
 
-The checked-in version is a template and should be replaced with your own details before using cover-letter generation.
+The tracked `web/config/applicant.php` file is a generic template. Laravel will automatically load and merge `web/config/applicant.local.php` when it exists.
 
 ## Main commands
 
@@ -213,7 +217,7 @@ The UI supports:
 - notes and status updates
 - probable duplicate warnings
 - manual command execution
-- editing `sources.yaml` and `criteria.yaml`
+- editing `sources.yaml` and `criteria.local.yaml`
 
 ## OpenAI setup
 
@@ -227,7 +231,7 @@ OPENAI_MODEL=gpt-5-mini
 OPENAI_BASE_URL=https://api.openai.com/v1
 ```
 
-Then update `web/config/applicant.php` with your own details.
+Then update `web/config/applicant.local.php` with your own details.
 
 Generated drafts are stored in the `interesting_jobs` table.
 
@@ -281,4 +285,5 @@ If you want a UI-driven scheduler later, the next sensible step is to move the c
 
 - Scrapers depend on third-party markup and APIs and will need maintenance over time.
 - The repository ships with demo search sources, generic scoring defaults, and a template applicant profile.
+- Put private scoring and applicant data in `*.local` override files, not the tracked template files.
 - Do not commit your personal API keys or private profile details.
