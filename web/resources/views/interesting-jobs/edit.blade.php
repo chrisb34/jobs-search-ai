@@ -146,6 +146,13 @@
             <div class="muted" style="white-space: pre-wrap; line-height: 1.6;">{{ $job->cover_letter_draft ?: 'No cover letter draft generated yet.' }}</div>
             @if ($job->cover_letter_usage_json)
                 <div class="muted" style="margin-top: 10px;">
+                    @if (!empty($job->cover_letter_usage_json['variant_label']))
+                        Variant {{ $job->cover_letter_usage_json['variant_label'] }}
+                        @if (!empty($job->cover_letter_usage_json['variant_matched_keywords']))
+                            · {{ implode(', ', array_slice($job->cover_letter_usage_json['variant_matched_keywords'], 0, 3)) }}
+                        @endif
+                        <br>
+                    @endif
                     Token usage:
                     input {{ $job->cover_letter_usage_json['input_tokens'] ?? '?' }},
                     output {{ $job->cover_letter_usage_json['output_tokens'] ?? '?' }},
