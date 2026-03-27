@@ -1,6 +1,6 @@
 <?php
 
-return [
+$base = [
     'profile' => [
         'name' => 'Your Name',
         'location' => 'Your Location',
@@ -100,3 +100,14 @@ return [
         ],
     ],
 ];
+
+$localPath = __DIR__.'/applicant.local.php';
+
+if (file_exists($localPath)) {
+    $local = require $localPath;
+    if (is_array($local)) {
+        return array_replace_recursive($base, $local);
+    }
+}
+
+return $base;

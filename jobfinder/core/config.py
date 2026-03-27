@@ -7,8 +7,15 @@ from pathlib import Path
 import yaml
 
 
+def resolve_local_override_path(path: str | Path) -> Path:
+    base_path = Path(path)
+    local_path = base_path.with_name(f"{base_path.stem}.local{base_path.suffix}")
+    return local_path if local_path.exists() else base_path
+
+
 def load_yaml_config(path: str | Path) -> dict:
-    with open(path, "r", encoding="utf-8") as handle:
+    resolved_path = resolve_local_override_path(path)
+    with open(resolved_path, "r", encoding="utf-8") as handle:
         data = yaml.safe_load(handle) or {}
     if not isinstance(data, dict):
         raise ValueError("Config root must be a mapping")
