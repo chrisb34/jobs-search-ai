@@ -19,13 +19,17 @@ USER_AGENT = (
     "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
 )
 
-ALGOLIA_APP_ID = "CSEKHVMS53"
-ALGOLIA_API_KEY = "4bd8f6215d0cc52b26430765769e65a0"
-ALGOLIA_INDEX_BY_LOCALE = {
+# These are public search parameters exposed by WTTJ's frontend integration.
+# They are not credentials owned by this project and should not be copied into .env.
+WTTJ_PUBLIC_SEARCH_APP_ID = "CSEKHVMS53"
+WTTJ_PUBLIC_SEARCH_API_KEY = "4bd8f6215d0cc52b26430765769e65a0"
+WTTJ_SEARCH_INDEX_BY_LOCALE = {
     "fr": "wttj_jobs_production_fr",
     "en": "wttj_jobs_production_en",
 }
-ALGOLIA_ENDPOINT = f"https://{ALGOLIA_APP_ID.lower()}-dsn.algolia.net/1/indexes/*/queries"
+WTTJ_SEARCH_ENDPOINT = (
+    f"https://{WTTJ_PUBLIC_SEARCH_APP_ID.lower()}-dsn.algolia.net/1/indexes/*/queries"
+)
 WTTJ_BASE_URL = "https://www.welcometothejungle.com"
 REMOTE_LABELS = {
     "fulltime": "remote",
@@ -81,7 +85,10 @@ class WttjSearchConfig:
 
     @property
     def index_name(self) -> str:
-        return ALGOLIA_INDEX_BY_LOCALE.get(self.language, ALGOLIA_INDEX_BY_LOCALE["fr"])
+        return WTTJ_SEARCH_INDEX_BY_LOCALE.get(
+            self.language,
+            WTTJ_SEARCH_INDEX_BY_LOCALE["fr"],
+        )
 
     def search_params(self, *, page: int, hits_per_page: int) -> str:
         payload: dict[str, Any] = {
@@ -133,8 +140,8 @@ class WttjScraper:
                 "Accept-Language": f"{config.language}-FR,{config.language};q=0.9,en;q=0.8",
                 "Origin": WTTJ_BASE_URL,
                 "Referer": config.search_url,
-                "X-Algolia-API-Key": ALGOLIA_API_KEY,
-                "X-Algolia-Application-Id": ALGOLIA_APP_ID,
+                "X-Algolia-API-Key": WTTJ_PUBLIC_SEARCH_API_KEY,
+                "X-Algolia-Application-Id": WTTJ_PUBLIC_SEARCH_APP_ID,
             }
         )
 
@@ -184,7 +191,7 @@ class WttjScraper:
                 }
             ]
         }
-        response = self.session.post(ALGOLIA_ENDPOINT, json=payload, timeout=30)
+        response = self.session.post(WTTJ_SEARCH_ENDPOINT, json=payload, timeout=30)
         response.raise_for_status()
         result = response.json()["results"][0]
         total_pages = int(result.get("nbPages", page))
