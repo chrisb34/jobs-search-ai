@@ -119,6 +119,16 @@
                         </td>
                         <td>
                             <a class="button secondary" href="{{ route('interesting-jobs.edit', $job) }}">Edit</a>
+                            <form method="post" action="{{ route('interesting-jobs.quick-action', $job) }}" style="margin-top: 8px;">
+                                @csrf
+                                <input type="hidden" name="action" value="not_relevant">
+                                <button class="button secondary" type="submit" style="width: 100%;">Not relevant</button>
+                            </form>
+                            <form method="post" action="{{ route('interesting-jobs.quick-action', $job) }}" style="margin-top: 8px;">
+                                @csrf
+                                <input type="hidden" name="action" value="already_applied">
+                                <button class="button secondary" type="submit" style="width: 100%;">Already applied</button>
+                            </form>
                         </td>
                     </tr>
                 @empty

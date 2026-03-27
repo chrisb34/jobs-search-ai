@@ -27,6 +27,19 @@ class InterestingJobController extends Controller
         'rejected',
     ];
 
+    private const QUICK_ACTIONS = [
+        'not_relevant' => [
+            'shortlist_status' => 'archived',
+            'notes' => 'not relevant',
+            'message' => 'Job marked as not relevant.',
+        ],
+        'already_applied' => [
+            'shortlist_status' => 'applied',
+            'notes' => 'duplicate',
+            'message' => 'Job marked as already applied.',
+        ],
+    ];
+
     public function index(Request $request, ProbableDuplicateFinder $duplicateFinder): View
     {
         $defaultStatus = $request->filled('status') ? (string) $request->string('status') : 'new';
@@ -152,6 +165,31 @@ class InterestingJobController extends Controller
         return redirect()
             ->route('interesting-jobs.index')
             ->with('status', 'Job updated.');
+    }
+
+    public function quickAction(Request $request, InterestingJob $interestingJob): RedirectResponse
+    {
+        $validated = $request->validate([
+            'action' => ['required', 'string'],
+        ]);
+
+        $action = self::QUICK_ACTIONS[$validated['action']] ?? null;
+        if ($action === null) {
+            return redirect()
+                ->back()
+                ->with('status', 'Unsupported quick action.');
+        }
+
+        $interestingJob->fill([
+            'shortlist_status' => $action['shortlist_status'],
+            'notes' => $action['notes'],
+            'updated_at' => now(),
+        ]);
+        $interestingJob->save();
+
+        return redirect()
+            ->back()
+            ->with('status', $action['message']);
     }
 
     public function generateCoverLetter(
