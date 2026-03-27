@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\InterestingJob;
 use Illuminate\Http\Client\Factory as HttpFactory;
 use Illuminate\Http\Client\Response;
+use Illuminate\Support\Arr;
 use RuntimeException;
 
 class CoverLetterGenerator
@@ -45,28 +46,39 @@ class CoverLetterGenerator
 
         $response = $response->json();
 
+        $variant = $this->selectVariant($job, config('applicant'));
+
         return [
             'draft' => $this->extractText($response),
             'model' => $response['model'] ?? $model,
-            'usage' => $response['usage'] ?? null,
+            'usage' => $this->buildUsagePayload($response['usage'] ?? null, $variant),
         ];
     }
 
     private function buildPrompt(InterestingJob $job): string
     {
         $applicant = config('applicant');
+        $variant = $this->selectVariant($job, $applicant);
+        $profileData = $this->mergeApplicantVariant($applicant, $variant['config']);
         $profile = $applicant['profile'] ?? [];
-        $skills = $this->stringifyList($applicant['core_skills'] ?? []);
-        $secondarySkills = $this->stringifyList($applicant['secondary_skills'] ?? []);
-        $targetRoles = $this->stringifyList($applicant['target_roles'] ?? []);
-        $strengths = $this->stringifyBullets($applicant['strengths'] ?? []);
-        $achievements = $this->stringifyBullets($applicant['achievements'] ?? []);
-        $constraints = $this->stringifyBullets($applicant['constraints'] ?? []);
-        $customizationRules = $this->stringifyBullets($applicant['customisation_rules'] ?? []);
-        $tone = $applicant['tone'] ?? [];
-        $preferences = $applicant['preferences'] ?? [];
-        $experienceNotes = $applicant['experience_notes'] ?? [];
-        $closingExamples = $this->stringifyBullets(($applicant['closing'] ?? [])['examples'] ?? []);
+        $skills = $this->stringifyList($profileData['core_skills'] ?? []);
+        $secondarySkills = $this->stringifyList($profileData['secondary_skills'] ?? []);
+        $targetRoles = $this->stringifyList($profileData['target_roles'] ?? []);
+        $strengths = $this->stringifyBullets($profileData['strengths'] ?? []);
+        $highlightStrengths = $this->stringifyBullets($profileData['highlight_strengths'] ?? []);
+        $achievements = $this->stringifyBullets($profileData['achievements'] ?? []);
+        $constraints = $this->stringifyBullets($profileData['constraints'] ?? []);
+        $customizationRules = $this->stringifyBullets($profileData['customisation_rules'] ?? []);
+        $tone = $profileData['tone'] ?? [];
+        $preferences = $profileData['preferences'] ?? [];
+        $experienceNotes = $profileData['experience_notes'] ?? [];
+        $closingExamples = $this->stringifyBullets(($profileData['closing'] ?? [])['examples'] ?? []);
+        $emphasis = $this->stringifyList($variant['config']['emphasis'] ?? []);
+        $variantReason = $this->stringifyBullets($variant['matched_keywords']);
+        $primaryLanguage = (string) ($experienceNotes['primary_language'] ?? 'Not specified');
+        $javaExperience = (string) ($experienceNotes['java'] ?? $experienceNotes['secondary_languages'] ?? 'Not specified');
+        $pythonExperience = (string) ($experienceNotes['python'] ?? $experienceNotes['secondary_languages'] ?? 'Not specified');
+        $positioning = (string) ($experienceNotes['positioning'] ?? 'Not specified');
 
         return <<<PROMPT
 Write a tailored cover letter draft for this job.
@@ -75,21 +87,28 @@ Applicant profile
 Name: {$profile['name']}
 Location: {$profile['location']}
 Work authorisation: {$profile['work_authorisation']}
-Summary: {$applicant['summary']}
+Selected positioning lens: {$variant['label']}
+Selection rationale:
+{$variantReason}
+Summary: {$profileData['summary']}
 Core skills: {$skills}
 Secondary skills: {$secondarySkills}
 Target roles: {$targetRoles}
 Preferred scope: {$this->stringifyList($preferences['scope'] ?? [])}
 Preferred environment: {$this->stringifyList($preferences['environment'] ?? [])}
 Avoided environments/roles: {$this->stringifyList($preferences['avoid'] ?? [])}
+Variant emphasis: {$emphasis}
 Strengths:
 {$strengths}
+Priority strengths for this variant:
+{$highlightStrengths}
 Achievements:
 {$achievements}
 Experience notes:
-- Primary language: {$experienceNotes['primary_language']}
-- Python: {$experienceNotes['python']}
-- Positioning: {$experienceNotes['positioning']}
+- Primary language: {$primaryLanguage}
+- Java: {$javaExperience}
+- Python: {$pythonExperience}
+- Positioning: {$positioning}
 Tone style: {$tone['style']}
 Tone guidelines:
 {$this->stringifyBullets($tone['guidelines'] ?? [])}
@@ -117,9 +136,10 @@ Instructions
 - Keep the draft to roughly 250-400 words.
 - Use concrete alignment with the role and applicant profile.
 - Do not invent experience, tools, achievements, or domain expertise.
+- Use the selected positioning lens strongly, but keep the applicant clearly hands-on and technically credible.
 - If the job emphasizes skills outside the applicant profile, acknowledge adjacent strengths without overstating expertise.
-- Treat Python as secondary tooling experience, not primary production positioning.
-- Prioritise Java, backend, API, integration, platform, and technical leadership strengths where relevant.
+- Do not present the applicant as purely architectural or non-coding.
+- Treat Python as secondary tooling experience, not primary production positioning, unless the applicant profile explicitly says otherwise.
 - Do not use bullet points.
 - End with one of these closings where appropriate:
 {$closingExamples}
@@ -160,6 +180,97 @@ PROMPT;
         }
 
         return 'OpenAI request failed with status '.$response->status().'.';
+    }
+
+    private function selectVariant(InterestingJob $job, array $applicant): array
+    {
+        $variants = $applicant['variants'] ?? [];
+        if (! is_array($variants) || $variants === []) {
+            return [
+                'key' => 'default',
+                'label' => 'Default profile',
+                'config' => [],
+                'matched_keywords' => ['No variant-specific configuration found.'],
+            ];
+        }
+
+        $selection = is_array($applicant['variant_selection'] ?? null) ? $applicant['variant_selection'] : [];
+        $defaultVariant = (string) ($selection['default'] ?? array_key_first($variants) ?? 'default');
+        $jobText = $this->jobText($job);
+
+        $bestKey = $defaultVariant;
+        $bestScore = -1;
+        $bestMatches = [];
+
+        foreach ($variants as $key => $variant) {
+            if (! is_array($variant)) {
+                continue;
+            }
+
+            $score = 0;
+            $matches = [];
+            foreach (($variant['selection_keywords'] ?? []) as $keyword => $weight) {
+                $needle = is_string($keyword) ? trim($keyword) : '';
+                $points = is_numeric($weight) ? (int) $weight : 1;
+                if ($needle === '') {
+                    continue;
+                }
+                if (str_contains($jobText, mb_strtolower($needle))) {
+                    $score += max(1, $points);
+                    $matches[] = "{$needle} (+{$points})";
+                }
+            }
+
+            if ($score > $bestScore) {
+                $bestKey = (string) $key;
+                $bestScore = $score;
+                $bestMatches = $matches;
+            }
+        }
+
+        $selected = is_array($variants[$bestKey] ?? null) ? $variants[$bestKey] : [];
+
+        return [
+            'key' => $bestKey,
+            'label' => (string) ($selected['label'] ?? $bestKey),
+            'config' => $selected,
+            'matched_keywords' => $bestMatches !== [] ? $bestMatches : ['No strong variant keyword matches; used default variant.'],
+        ];
+    }
+
+    private function mergeApplicantVariant(array $applicant, array $variant): array
+    {
+        $profileData = $applicant;
+        unset($profileData['variants'], $profileData['variant_selection']);
+
+        if ($variant === []) {
+            return $profileData;
+        }
+
+        return array_replace_recursive($profileData, Arr::except($variant, ['label', 'selection_keywords']));
+    }
+
+    private function jobText(InterestingJob $job): string
+    {
+        return mb_strtolower(implode(' ', array_filter([
+            (string) $job->title,
+            (string) $job->company,
+            (string) $job->location_raw,
+            (string) $job->contract_type,
+            (string) $job->notes,
+            (string) $job->ai_reason,
+            (string) $job->description_snapshot,
+        ])));
+    }
+
+    private function buildUsagePayload(?array $usage, array $variant): ?array
+    {
+        $payload = is_array($usage) ? $usage : [];
+        $payload['variant_key'] = $variant['key'];
+        $payload['variant_label'] = $variant['label'];
+        $payload['variant_matched_keywords'] = $variant['matched_keywords'];
+
+        return $payload;
     }
 
     private function stringifyList(array $values): string
