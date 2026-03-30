@@ -42,6 +42,9 @@
         .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
         .button { display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--accent); background: var(--accent); color: #fff; padding: 10px 14px; border-radius: 999px; font-weight: 600; cursor: pointer; }
         .button.secondary { background: transparent; color: var(--accent); }
+        .button[disabled] { opacity: 0.8; cursor: wait; }
+        .button .spinner { display: none; width: 14px; height: 14px; margin-right: 8px; border-radius: 999px; border: 2px solid currentColor; border-right-color: transparent; animation: spin 0.75s linear infinite; }
+        .button.is-loading .spinner { display: inline-block; }
         .header-links { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
         .table-wrap { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; }
@@ -65,6 +68,10 @@
         .compact-input { max-width: 120px; }
         .console-output { margin: 0; padding: 12px; border-radius: 12px; border: 1px solid var(--line); background: #faf7f1; overflow-x: auto; white-space: pre-wrap; line-height: 1.5; font-family: "SFMono-Regular", Menlo, Monaco, Consolas, monospace; font-size: 0.9rem; }
         .console-error { background: #fff1ec; border-color: #e5beb1; }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
         @media (max-width: 720px) {
             .header { align-items: start; flex-direction: column; }
             th:nth-child(4), td:nth-child(4) { display: none; }
@@ -91,5 +98,28 @@
         @endif
         @yield('content')
     </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('form').forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    const submitter = event.submitter;
+                    if (!submitter || !submitter.dataset.loadingText) {
+                        return;
+                    }
+
+                    if (submitter.dataset.loadingApplied === '1') {
+                        event.preventDefault();
+                        return;
+                    }
+
+                    submitter.dataset.loadingApplied = '1';
+                    submitter.dataset.originalHtml = submitter.innerHTML;
+                    submitter.classList.add('is-loading');
+                    submitter.disabled = true;
+                    submitter.innerHTML = '<span class="spinner" aria-hidden="true"></span><span>' + submitter.dataset.loadingText + '</span>';
+                });
+            });
+        });
+    </script>
 </body>
 </html>

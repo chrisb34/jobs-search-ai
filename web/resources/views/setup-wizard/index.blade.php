@@ -47,7 +47,7 @@
                 <input id="password" type="text" name="password" value="{{ old('password', $dbSettings['password']) }}">
             </div>
             <div class="actions" style="grid-column: 1 / -1;">
-                <button class="button" type="submit">Save and validate DB settings</button>
+                <button class="button" type="submit" data-loading-text="Validating...">Save and validate DB settings</button>
             </div>
         </form>
     </div>
@@ -74,7 +74,7 @@
                 </div>
             </div>
             <div class="actions">
-                <button class="button" type="submit">Generate local criteria and applicant profile</button>
+                <button class="button" type="submit" data-loading-text="Generating...">Generate local criteria and applicant profile</button>
             </div>
         </form>
     </div>
