@@ -178,6 +178,10 @@
 
             <div>
                 <label for="notes">Notes</label>
+                <div class="muted" style="margin-bottom: 8px;">
+                    Use <code>&lt;letter&gt;...&lt;/letter&gt;</code> for cover-letter-specific guidance.
+                    Example: <code>&lt;letter&gt;While not a Python expert, I use Python for scripting and automation and bring strong backend architecture experience from similar languages.&lt;/letter&gt;</code>
+                </div>
                 <textarea id="notes" name="notes">{{ old('notes', $job->notes) }}</textarea>
                 @error('notes')
                     <div style="color: var(--warn); margin-top: 6px;">{{ $message }}</div>

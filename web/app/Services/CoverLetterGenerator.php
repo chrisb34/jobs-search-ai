@@ -79,6 +79,9 @@ class CoverLetterGenerator
         $javaExperience = (string) ($experienceNotes['java'] ?? $experienceNotes['secondary_languages'] ?? 'Not specified');
         $pythonExperience = (string) ($experienceNotes['python'] ?? $experienceNotes['secondary_languages'] ?? 'Not specified');
         $positioning = (string) ($experienceNotes['positioning'] ?? 'Not specified');
+        $noteContext = $this->extractLetterContext((string) $job->notes);
+        $generalNotes = $this->stringifyBullets($noteContext['general_notes']);
+        $letterNotes = $this->stringifyBullets($noteContext['letter_notes']);
 
         return <<<PROMPT
 Write a tailored cover letter draft for this job.
@@ -126,7 +129,10 @@ Location: {$job->location_raw}
 Remote type: {$job->remote_type}
 Contract type: {$job->contract_type}
 AI reason: {$job->ai_reason}
-Shortlist notes: {$job->notes}
+General shortlist notes:
+{$generalNotes}
+Cover letter specific notes:
+{$letterNotes}
 Salary snapshot: {$job->salary_snapshot}
 
 Job description
@@ -138,6 +144,7 @@ Instructions
 - Do not invent experience, tools, achievements, or domain expertise.
 - Use the selected positioning lens strongly, but keep the applicant clearly hands-on and technically credible.
 - If the job emphasizes skills outside the applicant profile, acknowledge adjacent strengths without overstating expertise.
+- Treat any cover letter specific notes as high-priority guidance when they are credible and consistent with the applicant profile.
 - Do not present the applicant as purely architectural or non-coding.
 - Treat Python as secondary tooling experience, not primary production positioning, unless the applicant profile explicitly says otherwise.
 - Do not use bullet points.
@@ -271,6 +278,33 @@ PROMPT;
         $payload['variant_matched_keywords'] = $variant['matched_keywords'];
 
         return $payload;
+    }
+
+    private function extractLetterContext(string $notes): array
+    {
+        if (trim($notes) === '') {
+            return [
+                'general_notes' => [],
+                'letter_notes' => [],
+            ];
+        }
+
+        preg_match_all('/<letter>(.*?)<\/letter>/is', $notes, $matches);
+        $letterNotes = array_values(array_filter(array_map(
+            static fn (string $value): string => trim(strip_tags($value)),
+            $matches[1] ?? []
+        )));
+
+        $generalNotesText = preg_replace('/<letter>.*?<\/letter>/is', '', $notes) ?? '';
+        $generalNotes = array_values(array_filter(array_map(
+            static fn (string $line): string => trim($line),
+            preg_split('/\r\n|\r|\n/', $generalNotesText) ?: []
+        )));
+
+        return [
+            'general_notes' => $generalNotes,
+            'letter_notes' => $letterNotes,
+        ];
     }
 
     private function stringifyList(array $values): string
