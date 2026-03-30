@@ -80,6 +80,7 @@
             </div>
             <div class="header-links">
                 <a class="button secondary" href="{{ route('interesting-jobs.index') }}">Shortlist</a>
+                <a class="button secondary" href="{{ route('setup-wizard.index') }}">Setup</a>
                 <a class="button secondary" href="{{ route('console.index') }}">Console</a>
                 <a class="button secondary" href="{{ route('jobfinder-config.index') }}">Config</a>
                 <div class="muted">{{ $subheading ?? 'Review and update shortlisted roles.' }}</div>
