@@ -60,6 +60,10 @@ class SetupWizardController extends Controller
         SetupWizardGenerator $generator,
         SetupWizardFiles $files
     ): RedirectResponse {
+        @set_time_limit(0);
+        @ini_set('max_execution_time', '0');
+        @ignore_user_abort(true);
+
         $validated = $request->validate([
             'cv_file' => ['required', 'file', 'mimes:txt,md,docx,doc,pdf', 'max:5120'],
             'extra_context' => ['nullable', 'string', 'max:5000'],

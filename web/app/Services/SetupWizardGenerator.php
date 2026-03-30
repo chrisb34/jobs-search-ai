@@ -24,19 +24,24 @@ class SetupWizardGenerator
             throw new RuntimeException('Missing OPENAI_API_KEY in web/.env');
         }
 
-        $criteria = $this->sendPrompt(
+        $preparedCvText = $this->prepareCvText($cvText);
+        $generated = $this->sendPrompt(
             $baseUrl,
             $apiKey,
             $model,
-            $this->buildCriteriaPrompt($cvText, $extraContext),
+            $this->buildCombinedPrompt($preparedCvText, $extraContext),
         );
 
-        $applicant = $this->sendPrompt(
-            $baseUrl,
-            $apiKey,
-            $model,
-            $this->buildApplicantPrompt($cvText, $extraContext),
-        );
+        $decoded = json_decode($this->stripCodeFences($generated), true);
+        if (! is_array($decoded)) {
+            throw new RuntimeException('OpenAI did not return valid JSON for the setup wizard.');
+        }
+
+        $criteria = trim((string) ($decoded['criteria_yaml'] ?? ''));
+        $applicant = trim((string) ($decoded['applicant_php'] ?? ''));
+        if ($criteria === '' || $applicant === '') {
+            throw new RuntimeException('OpenAI response was missing criteria or applicant content.');
+        }
 
         return [
             'criteria' => $this->stripCodeFences($criteria),
@@ -49,8 +54,8 @@ class SetupWizardGenerator
         $response = $this->http
             ->withToken($apiKey)
             ->acceptJson()
-            ->timeout(120)
-            ->retry(2, 1500, throw: false)
+            ->timeout(180)
+            ->retry(1, 1200, throw: false)
             ->post($baseUrl.'/responses', [
                 'model' => $model,
                 'input' => $prompt,
@@ -63,21 +68,36 @@ class SetupWizardGenerator
         return $this->extractText($response->json());
     }
 
-    private function buildCriteriaPrompt(string $cvText, string $extraContext): string
+    private function buildCombinedPrompt(string $cvText, string $extraContext): string
     {
-        $template = $this->files->criteriaTemplate();
+        $criteriaTemplate = $this->files->criteriaTemplate();
+        $applicantTemplate = $this->files->applicantTemplate();
 
         return <<<PROMPT
-Generate a `criteria.local.yaml` file for a job-search scoring system.
+Generate both:
+1. a `criteria.local.yaml` file for a job-search scoring system
+2. a `web/config/applicant.local.php` file for a Laravel app
 
 Requirements:
-- Output raw YAML only.
-- Follow the same schema shape as this template:
-{$template}
-- Infer likely target roles, preferred technologies, seniority, remote preferences, and exclusions from the CV.
-- Be conservative and factual. Do not invent technologies or preferences not reasonably supported by the CV.
-- Include language penalties if a likely language preference is implied.
-- Prefer a practical, selective configuration rather than a broad one.
+- Return JSON only, with this exact shape:
+{
+  "criteria_yaml": "full yaml contents",
+  "applicant_php": "full php contents"
+}
+- `criteria_yaml` must be raw YAML matching the same schema shape as this template:
+{$criteriaTemplate}
+- `applicant_php` must be valid raw PHP starting with `<?php` and returning an array using the same overall structure as this template:
+{$applicantTemplate}
+- Infer likely target roles, preferred technologies, seniority, remote preferences, exclusions, and profile positioning from the CV.
+- Be conservative and factual. Do not invent technologies, preferences, or achievements not reasonably supported by the CV.
+- Keep achievements concrete and defensible.
+- For the applicant config, include these top-level keys:
+  profile, summary, core_skills, secondary_skills, target_roles, preferences, strengths, achievements, experience_notes, tone, constraints, customisation_rules, variant_selection, variants, closing
+- Under `variants`, include at least `fullstack` and `platform`
+- Make the two variants genuinely different in emphasis, but still represent the same senior hands-on engineer.
+- `variant_selection.default` should be whichever variant is the safer default from the CV.
+- Add `selection_keywords` arrays to both variants so the app can auto-select them from job text.
+- Do not wrap the YAML or PHP in markdown fences.
 
 Additional context from the user:
 {$extraContext}
@@ -87,31 +107,19 @@ CV text:
 PROMPT;
     }
 
-    private function buildApplicantPrompt(string $cvText, string $extraContext): string
+    private function prepareCvText(string $cvText): string
     {
-        return <<<PROMPT
-Generate a `web/config/applicant.local.php` file for a Laravel app.
+        $trimmed = trim($cvText);
+        $limit = 18000;
 
-Requirements:
-- Output valid raw PHP only.
-- Start with `<?php` and return a PHP array using `return [ ... ];`
-- Include these top-level keys:
-  profile, summary, core_skills, secondary_skills, target_roles, preferences, strengths, achievements, experience_notes, tone, constraints, customisation_rules, variant_selection, variants, closing
-- Under `variants`, include at least:
-  `fullstack` and `platform`
-- Use the CV to infer strong, factual positioning.
-- Do not invent experience.
-- Keep achievements concrete and defensible.
-- Make the two variants genuinely different in emphasis, but still represent the same senior hands-on engineer.
-- `variant_selection.default` should be whichever variant is the safer default from the CV.
-- Add `selection_keywords` arrays to both variants so the app can auto-select them from job text.
+        if (mb_strlen($trimmed) <= $limit) {
+            return $trimmed;
+        }
 
-Additional context from the user:
-{$extraContext}
+        $head = mb_substr($trimmed, 0, 12000);
+        $tail = mb_substr($trimmed, -5000);
 
-CV text:
-{$cvText}
-PROMPT;
+        return $head."\n\n[CV content truncated for length]\n\n".$tail;
     }
 
     private function stripCodeFences(string $contents): string

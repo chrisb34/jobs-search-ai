@@ -69,6 +69,9 @@
             <div>
                 <label for="extra_context">Extra context</label>
                 <textarea id="extra_context" name="extra_context" placeholder="Add role preferences, industries to avoid, geography preferences, language notes, etc.">{{ old('extra_context') }}</textarea>
+                <div class="muted" style="margin-top: 8px;">
+                    Generation runs in a single web request. If your CV is very large or the model is slow, retry with a shorter CV or plain-text export.
+                </div>
             </div>
             <div class="actions">
                 <button class="button" type="submit">Generate local criteria and applicant profile</button>
