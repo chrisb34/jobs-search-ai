@@ -58,8 +58,13 @@
             @csrf
             <div>
                 <label for="cv_file">CV file</label>
-                <input id="cv_file" type="file" name="cv_file" accept=".txt,.md,.docx,.pdf">
-                <div class="muted" style="margin-top: 8px;">Supported: txt, md, docx, pdf. PDF extraction requires <code>pdftotext</code> on the host.</div>
+                <input id="cv_file" type="file" name="cv_file" accept=".txt,.md,.docx,.doc,.pdf">
+                <div class="muted" style="margin-top: 8px;">
+                    Preferred formats: <code>txt</code>, <code>md</code>, <code>docx</code>.
+                    Supported with more caveats: <code>doc</code>, <code>pdf</code>.
+                    Text-based PDFs usually work, but complex layouts, multi-column CVs, and scanned/image PDFs can extract poorly.
+                    PDF extraction requires <code>pdftotext</code>; DOC extraction uses <code>textutil</code>.
+                </div>
             </div>
             <div>
                 <label for="extra_context">Extra context</label>

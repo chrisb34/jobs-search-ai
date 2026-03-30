@@ -218,6 +218,22 @@ The UI supports:
 - probable duplicate warnings
 - manual command execution
 - editing `sources.yaml` and `criteria.local.yaml`
+- a setup wizard for DB settings and CV-based local profile generation
+
+## CV upload guidance
+
+If you use the setup wizard to generate local config from a CV:
+
+- Best formats: `txt`, `md`
+- Good: `docx`
+- Supported with more caveats: `doc`, `pdf`
+
+Notes:
+
+- Text-based PDFs usually work, but complex layouts, multi-column CVs, exported design-heavy PDFs, and scanned/image PDFs can extract poorly.
+- Legacy `.doc` files are supported on macOS via `textutil`.
+- PDF extraction requires `pdftotext` on the host.
+- If the generated profile looks wrong, retry with a plain-text or DOCX version of the CV.
 
 ## OpenAI setup
 
