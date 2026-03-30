@@ -16,8 +16,9 @@ class CvTextExtractor
         return match ($extension) {
             'txt', 'md' => $this->extractTextFile($file),
             'docx' => $this->extractDocx($file),
+            'doc' => $this->extractDoc($file),
             'pdf' => $this->extractPdf($file),
-            default => throw new RuntimeException('Unsupported CV format. Use txt, md, docx, or pdf.'),
+            default => throw new RuntimeException('Unsupported CV format. Use txt, md, docx, doc, or pdf.'),
         };
     }
 
@@ -58,6 +59,24 @@ class CvTextExtractor
 
         if (! $process->isSuccessful()) {
             throw new RuntimeException('Unable to extract text from PDF CV.');
+        }
+
+        return $this->normalizeWhitespace($process->getOutput());
+    }
+
+    private function extractDoc(UploadedFile $file): string
+    {
+        $binary = trim((string) shell_exec('which textutil 2>/dev/null'));
+        if ($binary === '') {
+            throw new RuntimeException('DOC extraction requires textutil on the host.');
+        }
+
+        $process = new Process([$binary, '-convert', 'txt', '-stdout', $file->getRealPath()]);
+        $process->setTimeout(30);
+        $process->run();
+
+        if (! $process->isSuccessful()) {
+            throw new RuntimeException('Unable to extract text from DOC CV.');
         }
 
         return $this->normalizeWhitespace($process->getOutput());

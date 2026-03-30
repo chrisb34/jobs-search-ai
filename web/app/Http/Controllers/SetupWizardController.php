@@ -61,7 +61,7 @@ class SetupWizardController extends Controller
         SetupWizardFiles $files
     ): RedirectResponse {
         $validated = $request->validate([
-            'cv_file' => ['required', 'file', 'mimes:txt,md,docx,pdf', 'max:5120'],
+            'cv_file' => ['required', 'file', 'mimes:txt,md,docx,doc,pdf', 'max:5120'],
             'extra_context' => ['nullable', 'string', 'max:5000'],
         ]);
 
