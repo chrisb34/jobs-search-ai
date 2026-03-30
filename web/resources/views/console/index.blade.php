@@ -38,7 +38,7 @@
                 <label for="only_unscored" style="margin: 0;">Only unscored</label>
             </div>
             <div class="actions">
-                <button class="button" type="submit">Run command</button>
+                <button class="button" type="submit" data-loading-text="Running...">Run command</button>
             </div>
         </form>
     </div>

@@ -64,7 +64,7 @@
         <form method="post" action="{{ route('interesting-jobs.generate-cover-letter', $job) }}" style="margin-bottom: 18px;">
             @csrf
             <div class="actions">
-                <button class="button" type="submit">Generate cover letter</button>
+                <button class="button" type="submit" data-loading-text="Generating...">Generate cover letter</button>
                 @if ($job->cover_letter_generated_at)
                     <span class="muted">
                         Last generated {{ $job->cover_letter_generated_at->format('Y-m-d H:i') }}
