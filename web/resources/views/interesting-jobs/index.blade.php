@@ -118,17 +118,40 @@
                             @endif
                         </td>
                         <td>
-                            <a class="button secondary" href="{{ route('interesting-jobs.edit', $job) }}">Edit</a>
-                            <form method="post" action="{{ route('interesting-jobs.quick-action', $job) }}" style="margin-top: 8px;">
-                                @csrf
-                                <input type="hidden" name="action" value="not_relevant">
-                                <button class="button secondary" type="submit" style="width: 100%;">Not relevant</button>
-                            </form>
-                            <form method="post" action="{{ route('interesting-jobs.quick-action', $job) }}" style="margin-top: 8px;">
-                                @csrf
-                                <input type="hidden" name="action" value="already_applied">
-                                <button class="button secondary" type="submit" style="width: 100%;">Already applied</button>
-                            </form>
+                            <div class="actions" style="justify-content: flex-end;">
+                                <a class="button secondary icon-button" href="{{ route('interesting-jobs.edit', $job) }}" aria-label="Edit job">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M12 20h9" />
+                                        <path d="M16.5 3.5a2.12 2.12 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                                    </svg>
+                                </a>
+                                <details class="menu-wrap">
+                                    <summary class="button secondary menu-button" aria-label="More actions">
+                                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                            <circle cx="5" cy="12" r="1.8" />
+                                            <circle cx="12" cy="12" r="1.8" />
+                                            <circle cx="19" cy="12" r="1.8" />
+                                        </svg>
+                                    </summary>
+                                    <div class="menu-panel">
+                                        <form method="post" action="{{ route('interesting-jobs.quick-action', $job) }}">
+                                            @csrf
+                                            <input type="hidden" name="action" value="not_relevant">
+                                            <button class="button secondary" type="submit">Not relevant</button>
+                                        </form>
+                                        <form method="post" action="{{ route('interesting-jobs.quick-action', $job) }}">
+                                            @csrf
+                                            <input type="hidden" name="action" value="already_applied">
+                                            <button class="button secondary" type="submit">Already applied</button>
+                                        </form>
+                                        <form method="post" action="{{ route('interesting-jobs.quick-action', $job) }}">
+                                            @csrf
+                                            <input type="hidden" name="action" value="reject">
+                                            <button class="button secondary" type="submit">Rejected</button>
+                                        </form>
+                                    </div>
+                                </details>
+                            </div>
                         </td>
                     </tr>
                 @empty

@@ -38,6 +38,11 @@ class InterestingJobController extends Controller
             'notes' => 'duplicate',
             'message' => 'Job marked as already applied.',
         ],
+        'reject' => [
+            'shortlist_status' => 'rejected',
+            'notes' => 'rejected',
+            'message' => 'Job marked as rejected.',
+        ],
     ];
 
     public function index(Request $request, ProbableDuplicateFinder $duplicateFinder): View
