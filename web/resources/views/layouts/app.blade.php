@@ -29,8 +29,15 @@
         a:hover { text-decoration: underline; }
         .page { max-width: 1280px; margin: 0 auto; padding: 32px 20px 48px; }
         .header { display: flex; justify-content: space-between; align-items: end; gap: 16px; margin-bottom: 24px; }
+        .header-main { min-width: 0; }
+        .header-topline { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+        .back-link { display: inline-flex; align-items: center; gap: 8px; color: var(--accent); font-weight: 700; }
+        .back-link:hover { text-decoration: none; }
+        .back-link svg { width: 16px; height: 16px; }
         .eyebrow { letter-spacing: 0.12em; text-transform: uppercase; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+        .header-topline .eyebrow { margin-bottom: 0; }
         h1 { margin: 0; font-size: clamp(2rem, 4vw, 3.4rem); line-height: 0.95; }
+        .title-subheading { margin-top: 12px; font-size: 1.05rem; color: var(--muted); }
         .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); }
         .flash { margin-bottom: 16px; padding: 12px 14px; background: var(--accent-soft); border: 1px solid #b4d4c8; border-radius: 12px; }
         .filters, .edit-grid { display: grid; gap: 12px; }
@@ -46,6 +53,7 @@
         .button .spinner { display: none; width: 14px; height: 14px; margin-right: 8px; border-radius: 999px; border: 2px solid currentColor; border-right-color: transparent; animation: spin 0.75s linear infinite; }
         .button.is-loading .spinner { display: inline-block; }
         .header-links { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+        .header-links.actions-only { justify-content: flex-end; }
         .table-wrap { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 14px 16px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
@@ -68,12 +76,22 @@
         .compact-input { max-width: 120px; }
         .console-output { margin: 0; padding: 12px; border-radius: 12px; border: 1px solid var(--line); background: #faf7f1; overflow-x: auto; white-space: pre-wrap; line-height: 1.5; font-family: "SFMono-Regular", Menlo, Monaco, Consolas, monospace; font-size: 0.9rem; }
         .console-error { background: #fff1ec; border-color: #e5beb1; }
+        .icon-button { width: 42px; height: 42px; padding: 0; border-radius: 999px; }
+        .icon-button svg { width: 18px; height: 18px; }
+        .menu-wrap { position: relative; display: inline-block; }
+        .menu-button { width: 42px; height: 42px; padding: 0; border-radius: 999px; }
+        .menu-button::-webkit-details-marker { display: none; }
+        .menu-button svg { width: 18px; height: 18px; }
+        .menu-panel { position: absolute; right: 0; top: calc(100% + 8px); min-width: 180px; padding: 8px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); z-index: 20; }
+        .menu-panel form + form { margin-top: 8px; }
+        .menu-panel .button { width: 100%; justify-content: flex-start; }
         @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
         @media (max-width: 720px) {
             .header { align-items: start; flex-direction: column; }
+            .header-links.actions-only { justify-content: flex-start; }
             th:nth-child(4), td:nth-child(4) { display: none; }
         }
     </style>
@@ -81,17 +99,35 @@
 <body>
     <main class="page">
         <div class="header">
-            <div>
-                <div class="eyebrow">Jobs AI Admin</div>
+            <div class="header-main">
+                <div class="header-topline">
+                    @if (!empty($backHref ?? null))
+                        <a class="back-link" href="{{ $backHref }}" aria-label="{{ $backAriaLabel ?? ($backLabel ?? 'Back') }}">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M15 18l-6-6 6-6" />
+                            </svg>
+                            @if (!empty($backLabel ?? null))
+                                <span>{{ $backLabel }}</span>
+                            @endif
+                        </a>
+                    @endif
+                    <div class="eyebrow">Jobs AI Admin</div>
+                </div>
                 <h1>{{ $heading ?? 'Interesting Jobs' }}</h1>
+                @if (!empty($subheading ?? null))
+                    <div class="title-subheading">{{ $subheading }}</div>
+                @endif
             </div>
-            <div class="header-links">
-                <a class="button secondary" href="{{ route('interesting-jobs.index') }}">Shortlist</a>
-                <a class="button secondary" href="{{ route('setup-wizard.index') }}">Setup</a>
-                <a class="button secondary" href="{{ route('console.index') }}">Console</a>
-                <a class="button secondary" href="{{ route('jobfinder-config.index') }}">Config</a>
-                <div class="muted">{{ $subheading ?? 'Review and update shortlisted roles.' }}</div>
-            </div>
+            @hasSection('header_actions')
+                <div class="header-links actions-only">@yield('header_actions')</div>
+            @elseif (($showGlobalNav ?? true) === true)
+                <div class="header-links">
+                    <a class="button secondary" href="{{ route('interesting-jobs.index') }}">Shortlist</a>
+                    <a class="button secondary" href="{{ route('setup-wizard.index') }}">Setup</a>
+                    <a class="button secondary" href="{{ route('console.index') }}">Console</a>
+                    <a class="button secondary" href="{{ route('jobfinder-config.index') }}">Config</a>
+                </div>
+            @endif
         </div>
         @if (session('status'))
             <div class="flash">{{ session('status') }}</div>
