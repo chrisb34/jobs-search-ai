@@ -129,6 +129,11 @@
                                 <input type="hidden" name="action" value="already_applied">
                                 <button class="button secondary" type="submit" style="width: 100%;">Already applied</button>
                             </form>
+                            <form method="post" action="{{ route('interesting-jobs.quick-action', $job) }}" style="margin-top: 8px;">
+                                @csrf
+                                <input type="hidden" name="action" value="reject">
+                                <button class="button secondary" type="submit" style="width: 100%;">Reject</button>
+                            </form>
                         </td>
                     </tr>
                 @empty
