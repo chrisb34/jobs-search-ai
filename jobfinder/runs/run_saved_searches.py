@@ -88,20 +88,31 @@ def main() -> int:
     db_path.parent.mkdir(parents=True, exist_ok=True)
 
     total_jobs = 0
+    failed_searches: list[tuple[str, str]] = []
     with connect(db_path) as conn:
         init_db(conn)
         for search in searches:
-            total_jobs += _run_single_search(
-                conn,
-                source=search.get("source", ""),
-                search_name=search.get("name", "unnamed"),
-                search_url=search["search_url"],
-                pages=args.pages,
-                auto_pages=args.auto_pages,
-                delay_seconds=args.delay_seconds,
-            )
+            search_name = search.get("name", "unnamed")
+            try:
+                total_jobs += _run_single_search(
+                    conn,
+                    source=search.get("source", ""),
+                    search_name=search_name,
+                    search_url=search["search_url"],
+                    pages=args.pages,
+                    auto_pages=args.auto_pages,
+                    delay_seconds=args.delay_seconds,
+                )
+            except Exception as exc:
+                failed_searches.append((search_name, str(exc)))
+                print(f"{search_name}: failed - {exc}")
 
     print(f"Completed {len(searches)} search(es), scraped {total_jobs} jobs total")
+    if failed_searches:
+        print(f"Failed searches: {len(failed_searches)}")
+        for search_name, error in failed_searches:
+            print(f"- {search_name}: {error}")
+        return 1
     return 0
 
 
