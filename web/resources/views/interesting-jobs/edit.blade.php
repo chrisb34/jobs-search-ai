@@ -1,8 +1,29 @@
 @extends('layouts.app', [
     'title' => 'Edit Job',
     'heading' => $job->title,
-    'subheading' => $job->company.' · '.($job->location_raw ?: 'Location unknown'),
+    'subheading' => $job->company,
+    'showGlobalNav' => false,
+    'backHref' => route('interesting-jobs.index'),
+    'backAriaLabel' => 'Back to listing',
 ])
+
+@section('header_actions')
+    <form method="post" action="{{ route('interesting-jobs.quick-action', $job) }}">
+        @csrf
+        <input type="hidden" name="action" value="reject">
+        <button class="button secondary" type="submit">Rejected</button>
+    </form>
+    <form method="post" action="{{ route('interesting-jobs.quick-action', $job) }}">
+        @csrf
+        <input type="hidden" name="action" value="not_relevant">
+        <button class="button secondary" type="submit">Not Relevant</button>
+    </form>
+    <form method="post" action="{{ route('interesting-jobs.quick-action', $job) }}">
+        @csrf
+        <input type="hidden" name="action" value="already_applied">
+        <button class="button secondary" type="submit">Already Applied</button>
+    </form>
+@endsection
 
 @section('content')
     <div class="meta-grid">
@@ -178,6 +199,10 @@
 
             <div>
                 <label for="notes">Notes</label>
+                <div class="muted" style="margin-bottom: 8px;">
+                    Use <code>&lt;letter&gt;...&lt;/letter&gt;</code> for cover-letter-specific guidance.
+                    Example: <code>&lt;letter&gt;While not a Python expert, I use Python for scripting and automation and bring strong backend architecture experience from similar languages.&lt;/letter&gt;</code>
+                </div>
                 <textarea id="notes" name="notes">{{ old('notes', $job->notes) }}</textarea>
                 @error('notes')
                     <div style="color: var(--warn); margin-top: 6px;">{{ $message }}</div>
@@ -186,7 +211,6 @@
 
             <div class="actions">
                 <button class="button" type="submit">Save changes</button>
-                <a class="button secondary" href="{{ route('interesting-jobs.index') }}">Back to list</a>
             </div>
         </form>
     </div>
