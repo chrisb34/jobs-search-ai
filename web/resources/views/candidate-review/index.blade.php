@@ -1,19 +1,19 @@
 @extends('layouts.app', [
-    'title' => 'False Negative Review',
-    'heading' => 'False Negative Review',
-    'subheading' => 'Review rejected jobs, flag misses, and inspect safe config suggestions before editing criteria.',
+    'title' => 'Candidate Review',
+    'heading' => 'Candidate Review',
+    'subheading' => 'Inspect scraped jobs that never made the shortlist, then flag the real misses for criteria tuning.',
     'backHref' => route('interesting-jobs.index'),
     'backAriaLabel' => 'Back to interesting jobs',
 ])
 
 @section('content')
-    <form method="get" action="{{ route('false-negatives.index') }}" class="panel filters">
+    <form method="get" action="{{ route('candidate-review.index') }}" class="panel filters">
         <div>
             <label for="scope">Scope</label>
             <select id="scope" name="scope">
                 <option value="rejected" @selected(($filters['scope'] ?? '') === 'rejected')>Rejected + flagged</option>
+                <option value="all" @selected(($filters['scope'] ?? '') === 'all')>All not shortlisted</option>
                 <option value="flagged" @selected(($filters['scope'] ?? '') === 'flagged')>Flagged only</option>
-                <option value="all" @selected(($filters['scope'] ?? '') === 'all')>All reject signals</option>
             </select>
         </div>
         <div>
@@ -22,14 +22,14 @@
         </div>
         <div class="actions">
             <button class="button" type="submit">Apply filters</button>
-            <a class="button secondary" href="{{ route('false-negatives.index') }}">Reset</a>
-            <a class="button secondary" href="{{ route('candidate-review.index') }}">Review missed candidates</a>
+            <a class="button secondary" href="{{ route('candidate-review.index') }}">Reset</a>
+            <a class="button secondary" href="{{ route('false-negatives.index') }}">Shortlist feedback</a>
         </div>
     </form>
 
     <div class="meta-grid">
         <div class="meta-card">
-            <div class="eyebrow">Flagged Jobs</div>
+            <div class="eyebrow">Flagged Total</div>
             <div class="score">{{ $suggestions['flagged_count'] }}</div>
             <div class="muted" style="margin-top: 8px;">
                 {{ $suggestions['flagged_candidate_count'] ?? 0 }} candidate rows · {{ $suggestions['flagged_shortlist_count'] ?? 0 }} shortlist rows
@@ -58,7 +58,7 @@
     <div class="panel" style="padding: 18px 22px; margin-bottom: 18px;">
         <div class="eyebrow">Suggestion Summary</div>
         @if (($suggestions['flagged_count'] ?? 0) === 0)
-            <div class="muted">No false negatives flagged yet. Mark jobs here first, then the suggestion summary will highlight missing title keywords, tech keywords, and exclusion conflicts.</div>
+            <div class="muted">No false negatives flagged yet. Mark candidate misses here or shortlist misses on the feedback page, then use the summary to update criteria safely.</div>
         @else
             <div class="meta-grid" style="margin: 12px 0 0;">
                 <div class="meta-card">
@@ -111,12 +111,6 @@
                             to {{ number_format((float) $suggestions['thresholds']['min_flagged_score'], 0) }}
                             would allow every currently flagged job to clear the rule threshold.
                         </div>
-                        @if (!is_null($suggestions['thresholds']['median_flagged_score'] ?? null))
-                            <div class="muted" style="margin-top: 10px;">
-                                Median flagged score: {{ number_format((float) $suggestions['thresholds']['median_flagged_score'], 0) }}.
-                                Treat threshold changes as a last resort; title and tech-keyword fixes are usually safer.
-                            </div>
-                        @endif
                     @else
                         <div class="muted">Threshold guidance appears after you flag at least one false negative.</div>
                     @endif
@@ -139,21 +133,35 @@
                 @forelse ($jobs as $job)
                     <tr>
                         <td>
-                            <div class="job-title">{{ $job->title }}</div>
-                            <div>{{ $job->company }}</div>
+                            <div class="job-title">{{ $job->title ?: 'Untitled role' }}</div>
+                            <div>{{ $job->company ?: 'Unknown company' }}</div>
                             <div class="muted">{{ $job->location_raw ?: 'Location unknown' }}</div>
                             <div class="muted">Source: {{ strtoupper($job->source) }} · {{ $job->source_job_id }}</div>
                             <div style="margin-top: 8px;">
-                                <a href="{{ route('interesting-jobs.edit', $job) }}">Open detail</a>
-                                ·
-                                <a href="{{ $job->url }}" target="_blank" rel="noreferrer">Listing</a>
+                                @if ($job->interesting_job_id)
+                                    <a href="{{ route('interesting-jobs.edit', $job->interesting_job_id) }}">Open shortlist row</a>
+                                    ·
+                                @endif
+                                @if ($job->url)
+                                    <a href="{{ $job->url }}" target="_blank" rel="noreferrer">Listing</a>
+                                @endif
                             </div>
                         </td>
                         <td>
-                            <span class="pill {{ $job->ai_decision }}">{{ strtoupper($job->ai_decision) }}</span>
-                            <span class="pill status">{{ strtoupper($job->shortlist_status) }}</span>
+                            <span class="pill {{ $job->ai_decision ?: 'status' }}">{{ strtoupper($job->ai_decision ?: 'unknown') }}</span>
+                            @if ($job->ai_llm_decision)
+                                <span class="pill {{ $job->ai_llm_decision }}">LLM {{ strtoupper($job->ai_llm_decision) }}</span>
+                            @endif
+                            @if ($job->shortlist_status)
+                                <span class="pill status">{{ strtoupper($job->shortlist_status) }}</span>
+                            @else
+                                <span class="pill status">NOT SHORTLISTED</span>
+                            @endif
                             @if ($job->false_negative)
                                 <span class="pill duplicate">FALSE NEGATIVE</span>
+                            @endif
+                            @if ($job->remote_type)
+                                <div class="muted" style="margin-top: 8px;">{{ strtoupper($job->remote_type) }}</div>
                             @endif
                             <div class="muted" style="margin-top: 8px;">Rule score {{ number_format((float) $job->ai_score, 0) }}</div>
                             <div class="muted" style="margin-top: 8px;">{{ \Illuminate\Support\Str::limit($job->ai_reason, 140) }}</div>
@@ -161,17 +169,19 @@
                         <td>
                             @if ($job->false_negative)
                                 <div class="muted" style="margin-bottom: 8px;">
-                                    Marked {{ $job->false_negative_marked_at?->format('Y-m-d H:i') ?? 'recently' }}
+                                    Marked {{ \Illuminate\Support\Carbon::parse($job->false_negative_marked_at)->format('Y-m-d H:i') }}
                                 </div>
                             @endif
                             <div class="muted">{{ \Illuminate\Support\Str::limit($job->false_negative_reason ?: 'No reviewer reason yet.', 180) }}</div>
                         </td>
                         <td>
-                            <form method="post" action="{{ route('false-negatives.update', $job) }}" class="edit-grid" style="gap: 8px;">
+                            <form method="post" action="{{ route('candidate-review.update') }}" class="edit-grid" style="gap: 8px;">
                                 @csrf
+                                <input type="hidden" name="source" value="{{ $job->source }}">
+                                <input type="hidden" name="source_job_id" value="{{ $job->source_job_id }}">
                                 <div>
-                                    <label for="false_negative_reason_{{ $job->id }}">Why should this have passed?</label>
-                                    <textarea id="false_negative_reason_{{ $job->id }}" name="false_negative_reason" style="min-height: 100px;">{{ $job->false_negative_reason }}</textarea>
+                                    <label for="candidate_false_negative_reason_{{ $job->source }}_{{ $job->source_job_id }}">Why should this have passed?</label>
+                                    <textarea id="candidate_false_negative_reason_{{ $job->source }}_{{ $job->source_job_id }}" name="false_negative_reason" style="min-height: 100px;">{{ $job->false_negative_reason }}</textarea>
                                 </div>
                                 <div class="actions">
                                     <button class="button" type="submit" name="false_negative" value="1">Mark false negative</button>
@@ -184,7 +194,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="4" class="muted">No rejected jobs matched your filters.</td>
+                        <td colspan="4" class="muted">No candidate jobs matched your filters.</td>
                     </tr>
                 @endforelse
             </tbody>

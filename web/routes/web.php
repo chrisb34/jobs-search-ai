@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CandidateReviewController;
 use App\Http\Controllers\ConsoleController;
 use App\Http\Controllers\FalseNegativeController;
 use App\Http\Controllers\InterestingJobController;
@@ -16,6 +17,8 @@ Route::get('/setup-wizard', [SetupWizardController::class, 'index'])->name('setu
 Route::post('/setup-wizard/database', [SetupWizardController::class, 'saveDatabase'])->name('setup-wizard.database');
 Route::post('/setup-wizard/generate', [SetupWizardController::class, 'generate'])->name('setup-wizard.generate');
 Route::get('/interesting-jobs', [InterestingJobController::class, 'index'])->name('interesting-jobs.index');
+Route::get('/candidate-review', [CandidateReviewController::class, 'index'])->name('candidate-review.index');
+Route::post('/candidate-review', [CandidateReviewController::class, 'update'])->name('candidate-review.update');
 Route::get('/false-negatives', [FalseNegativeController::class, 'index'])->name('false-negatives.index');
 Route::get('/interesting-jobs/{interestingJob}/edit', [InterestingJobController::class, 'edit'])->name('interesting-jobs.edit');
 Route::post('/interesting-jobs/{interestingJob}', [InterestingJobController::class, 'update'])->name('interesting-jobs.update');

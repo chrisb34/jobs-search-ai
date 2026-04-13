@@ -49,6 +49,7 @@
             <button class="button" type="submit">Apply filters</button>
             <a class="button secondary" href="{{ route('interesting-jobs.index') }}">Reset</a>
             <a class="button secondary" href="{{ route('false-negatives.index') }}">Review rejected jobs</a>
+            <a class="button secondary" href="{{ route('candidate-review.index') }}">Review missed candidates</a>
         </div>
     </form>
 
