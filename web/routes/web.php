@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ConsoleController;
+use App\Http\Controllers\FalseNegativeController;
 use App\Http\Controllers\InterestingJobController;
 use App\Http\Controllers\JobfinderConfigController;
 use App\Http\Controllers\SetupWizardController;
@@ -15,9 +16,12 @@ Route::get('/setup-wizard', [SetupWizardController::class, 'index'])->name('setu
 Route::post('/setup-wizard/database', [SetupWizardController::class, 'saveDatabase'])->name('setup-wizard.database');
 Route::post('/setup-wizard/generate', [SetupWizardController::class, 'generate'])->name('setup-wizard.generate');
 Route::get('/interesting-jobs', [InterestingJobController::class, 'index'])->name('interesting-jobs.index');
+Route::get('/false-negatives', [FalseNegativeController::class, 'index'])->name('false-negatives.index');
 Route::get('/interesting-jobs/{interestingJob}/edit', [InterestingJobController::class, 'edit'])->name('interesting-jobs.edit');
 Route::post('/interesting-jobs/{interestingJob}', [InterestingJobController::class, 'update'])->name('interesting-jobs.update');
 Route::post('/interesting-jobs/{interestingJob}/quick-action', [InterestingJobController::class, 'quickAction'])
     ->name('interesting-jobs.quick-action');
+Route::post('/interesting-jobs/{interestingJob}/false-negative', [FalseNegativeController::class, 'update'])
+    ->name('false-negatives.update');
 Route::post('/interesting-jobs/{interestingJob}/generate-cover-letter', [InterestingJobController::class, 'generateCoverLetter'])
     ->name('interesting-jobs.generate-cover-letter');

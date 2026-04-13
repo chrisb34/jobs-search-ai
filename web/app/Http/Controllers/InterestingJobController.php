@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\InterestingJob;
 use App\Services\CoverLetterGenerator;
+use App\Services\FalseNegativeReviewService;
 use App\Services\ProbableDuplicateFinder;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -45,8 +46,14 @@ class InterestingJobController extends Controller
         ],
     ];
 
-    public function index(Request $request, ProbableDuplicateFinder $duplicateFinder): View
+    public function index(
+        Request $request,
+        ProbableDuplicateFinder $duplicateFinder,
+        FalseNegativeReviewService $falseNegativeReviewService
+    ): View
     {
+        $falseNegativeReviewService->ensureColumns();
+
         $defaultStatus = $request->filled('status') ? (string) $request->string('status') : 'new';
 
         $query = InterestingJob::query()

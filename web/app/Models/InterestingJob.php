@@ -39,6 +39,9 @@ class InterestingJob extends Model
         'cover_letter_generated_at',
         'cover_letter_model',
         'cover_letter_usage_json',
+        'false_negative',
+        'false_negative_reason',
+        'false_negative_marked_at',
         'promoted_at',
         'updated_at',
     ];
@@ -55,9 +58,11 @@ class InterestingJob extends Model
             'source_snapshot_json' => 'array',
             'ai_llm_usage_json' => 'array',
             'cover_letter_usage_json' => 'array',
+            'false_negative' => 'boolean',
             'snapshot_taken_at' => 'datetime',
             'ai_llm_scored_at' => 'datetime',
             'cover_letter_generated_at' => 'datetime',
+            'false_negative_marked_at' => 'datetime',
             'promoted_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
