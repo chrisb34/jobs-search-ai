@@ -123,6 +123,7 @@
             @elseif (($showGlobalNav ?? true) === true)
                 <div class="header-links">
                     <a class="button secondary" href="{{ route('interesting-jobs.index') }}">Shortlist</a>
+                    <a class="button secondary" href="{{ route('candidate-review.index') }}">Candidates</a>
                     <a class="button secondary" href="{{ route('false-negatives.index') }}">Feedback</a>
                     <a class="button secondary" href="{{ route('setup-wizard.index') }}">Setup</a>
                     <a class="button secondary" href="{{ route('console.index') }}">Console</a>
