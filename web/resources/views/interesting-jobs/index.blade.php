@@ -48,6 +48,7 @@
         <div class="actions">
             <button class="button" type="submit">Apply filters</button>
             <a class="button secondary" href="{{ route('interesting-jobs.index') }}">Reset</a>
+            <a class="button secondary" href="{{ route('false-negatives.index') }}">Review rejected jobs</a>
         </div>
     </form>
 
@@ -80,6 +81,9 @@
                                 <span class="pill {{ $job->ai_llm_decision }}">LLM {{ strtoupper($job->ai_llm_decision) }}</span>
                             @endif
                             <span class="pill status">{{ strtoupper($job->shortlist_status) }}</span>
+                            @if ($job->false_negative)
+                                <span class="pill duplicate">FALSE NEGATIVE</span>
+                            @endif
                             @if ($job->remote_type)
                                 <span class="pill">{{ strtoupper($job->remote_type) }}</span>
                             @endif

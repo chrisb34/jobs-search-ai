@@ -23,6 +23,7 @@
         <input type="hidden" name="action" value="already_applied">
         <button class="button secondary" type="submit">Already Applied</button>
     </form>
+    <a class="button secondary" href="{{ route('false-negatives.index', ['q' => $job->title]) }}">False Negatives</a>
 @endsection
 
 @section('content')
@@ -74,6 +75,17 @@
         <div class="meta-card">
             <div class="eyebrow">Duplicates</div>
             <div>{{ ($job->duplicate_count ?? 1) > 1 ? 'Representative of '.$job->duplicate_count.' source rows' : 'Single source row' }}</div>
+        </div>
+        <div class="meta-card">
+            <div class="eyebrow">Feedback</div>
+            <div>
+                @if ($job->false_negative)
+                    <span class="pill duplicate">FALSE NEGATIVE</span>
+                    <div class="muted" style="margin-top: 8px;">{{ $job->false_negative_marked_at?->format('Y-m-d H:i') ?? 'Marked' }}</div>
+                @else
+                    No reviewer feedback
+                @endif
+            </div>
         </div>
     </div>
 
@@ -155,6 +167,23 @@
         <div style="margin-bottom: 18px;">
             <label>Salary Snapshot</label>
             <div class="muted">{{ $job->salary_snapshot ?: 'No salary snapshot recorded.' }}</div>
+        </div>
+
+        <div style="margin-bottom: 24px;">
+            <label>False Negative Feedback</label>
+            <form method="post" action="{{ route('false-negatives.update', $job) }}" class="edit-grid" style="gap: 8px;">
+                @csrf
+                <div class="muted">
+                    Use this when the job was rejected or missed but should inform future criteria updates.
+                </div>
+                <textarea name="false_negative_reason" style="min-height: 110px;">{{ old('false_negative_reason', $job->false_negative_reason) }}</textarea>
+                <div class="actions">
+                    <button class="button secondary" type="submit" name="false_negative" value="1">Mark false negative</button>
+                    @if ($job->false_negative)
+                        <button class="button secondary" type="submit" name="false_negative" value="0">Clear false negative</button>
+                    @endif
+                </div>
+            </form>
         </div>
 
         <div style="margin-bottom: 24px;">
