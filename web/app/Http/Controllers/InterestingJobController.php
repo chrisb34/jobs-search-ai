@@ -54,7 +54,7 @@ class InterestingJobController extends Controller
     {
         $falseNegativeReviewService->ensureColumns();
 
-        $defaultStatus = $request->filled('status') ? (string) $request->string('status') : 'new';
+        $defaultStatus = $request->has('status') ? (string) $request->input('status', '') : 'new';
 
         $query = InterestingJob::query()
             ->leftJoin('normalized_jobs as n', function ($join): void {
