@@ -8,6 +8,7 @@ from pathlib import Path
 from jobfinder.core.config import load_sources_config
 from jobfinder.core.normalize import normalize_raw_job
 from jobfinder.core.storage import connect, create_run, finish_run, init_db, upsert_normalized_job, upsert_raw_job
+from jobfinder.scrapers.doctrine import DoctrineScraper, DoctrineSearchConfig
 from jobfinder.scrapers.englishjobs import EnglishJobsScraper, EnglishJobsSearchConfig
 from jobfinder.scrapers.linkedin import LinkedInScraper, LinkedInSearchConfig
 from jobfinder.scrapers.remotefr import RemoteFrScraper, RemoteFrSearchConfig
@@ -48,6 +49,9 @@ def _run_single_search(
     elif source == "englishjobs":
         config = EnglishJobsSearchConfig.from_search_url(search_url)
         scraper = EnglishJobsScraper(config=config, delay_seconds=delay_seconds)
+    elif source == "doctrine":
+        config = DoctrineSearchConfig.from_search_url(search_url)
+        scraper = DoctrineScraper(config=config, delay_seconds=delay_seconds)
     elif source == "remotefr":
         config = RemoteFrSearchConfig.from_search_url(search_url)
         scraper = RemoteFrScraper(config=config, delay_seconds=delay_seconds)

@@ -15,7 +15,10 @@ use RuntimeException;
 class InterestingJobController extends Controller
 {
     private const SOURCES = [
+        'doctrine',
+        'englishjobs',
         'linkedin',
+        'remotefr',
         'wttj',
     ];
 
