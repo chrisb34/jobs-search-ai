@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
@@ -41,12 +41,12 @@
         .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); }
         .flash { margin-bottom: 16px; padding: 12px 14px; background: var(--accent-soft); border: 1px solid #b4d4c8; border-radius: 12px; }
         .filters, .edit-grid { display: grid; gap: 12px; }
-        .filters { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); padding: 16px; margin-bottom: 18px; }
+        .filters { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); padding: 16px;  }
         label { display: block; font-size: 0.9rem; color: var(--muted); margin-bottom: 6px; }
         input[type="text"], textarea, select { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font: inherit; background: #fff; color: var(--ink); }
         textarea { min-height: 180px; resize: vertical; }
         .config-editor { min-height: 360px; font-family: "SFMono-Regular", Menlo, Monaco, Consolas, monospace; font-size: 0.92rem; line-height: 1.5; }
-        .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding:20px; margin-bottom: 1rem; }
         .button { display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--accent); background: var(--accent); color: #fff; padding: 10px 14px; border-radius: 999px; font-weight: 600; cursor: pointer; }
         .button.secondary { background: transparent; color: var(--accent); }
         .button[disabled] { opacity: 0.8; cursor: wait; }
@@ -123,8 +123,6 @@
             @elseif (($showGlobalNav ?? true) === true)
                 <div class="header-links">
                     <a class="button secondary" href="{{ route('interesting-jobs.index') }}">Shortlist</a>
-                    <a class="button secondary" href="{{ route('candidate-review.index') }}">Candidates</a>
-                    <a class="button secondary" href="{{ route('false-negatives.index') }}">Feedback</a>
                     <a class="button secondary" href="{{ route('setup-wizard.index') }}">Setup</a>
                     <a class="button secondary" href="{{ route('console.index') }}">Console</a>
                     <a class="button secondary" href="{{ route('jobfinder-config.index') }}">Config</a>
