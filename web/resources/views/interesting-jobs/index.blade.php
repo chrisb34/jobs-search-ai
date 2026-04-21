@@ -5,7 +5,8 @@
 ])
 
 @section('content')
-    <form method="get" action="{{ route('interesting-jobs.index') }}" class="panel filters">
+    <form method="get" action="{{ route('interesting-jobs.index') }}">
+        <div class="panel filters">
         <div>
             <label for="q">Search</label>
             <input id="q" type="text" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="Title, company, notes">
@@ -44,6 +45,7 @@
         <div class="checkbox">
             <input id="remote_only" type="checkbox" name="remote_only" value="1" @checked(($filters['remote_only'] ?? null) === '1')>
             <label for="remote_only" style="margin: 0;">Remote only</label>
+        </div>
         </div>
         <div class="actions">
             <button class="button" type="submit">Apply filters</button>

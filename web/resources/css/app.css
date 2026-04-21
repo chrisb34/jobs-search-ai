@@ -9,3 +9,13 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+.filters {
+    @apply grid gap-4;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    padding: 16px;
+    margin-bottom: 0;
+}
+.actions {
+    @apply flex gap-2 items-center flex-wrap p-5 mb-4;
+    background-color: white;
+}
