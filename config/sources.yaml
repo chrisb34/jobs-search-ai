@@ -26,3 +26,6 @@ searches:
   - name: englishjobs-remote
     source: englishjobs
     search_url: "https://englishjobs.fr/jobs/remote"
+  - name: doctrine-careers
+    source: doctrine
+    search_url: "https://www.doctrine.fr/recrutement"
