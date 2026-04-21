@@ -528,12 +528,9 @@ def upsert_interesting_job(conn: sqlite3.Connection, row: sqlite3.Row) -> None:
         conn.execute(
             """
             UPDATE interesting_jobs
-            SET source = ?,
-                source_job_id = ?,
-                canonical_job_key = ?,
+            SET canonical_job_key = ?,
                 title = ?,
                 company = ?,
-                url = ?,
                 location_raw = ?,
                 remote_type = ?,
                 contract_type = ?,
@@ -566,12 +563,9 @@ def upsert_interesting_job(conn: sqlite3.Connection, row: sqlite3.Row) -> None:
             WHERE id = ?
             """,
             (
-                row["source"],
-                row["source_job_id"],
                 row["canonical_job_key"],
                 row["title"],
                 row["company"],
-                row["url"],
                 row["location_raw"],
                 row["remote_type"],
                 row["contract_type"],
