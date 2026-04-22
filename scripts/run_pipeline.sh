@@ -12,14 +12,17 @@ log() {
 run_step() {
   local label="$1"
   shift
+  local exit_code=0
 
   log "START ${label}"
-  if "$@"; then
+  "$@"
+  exit_code=$?
+
+  if [[ "${exit_code}" -eq 0 ]]; then
     log "OK    ${label}"
     return 0
   fi
 
-  local exit_code=$?
   log "FAIL  ${label} (exit ${exit_code})"
   return "${exit_code}"
 }
