@@ -4,6 +4,7 @@ set -u
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 PYTHON_BIN="${PROJECT_ROOT}/.venv/bin/python"
+LOCK_DIR="${PROJECT_ROOT}/.pipeline.lock"
 
 log() {
   printf '[%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*"
@@ -27,7 +28,18 @@ run_step() {
   return "${exit_code}"
 }
 
+cleanup_lock() {
+  rmdir "${LOCK_DIR}" 2>/dev/null || true
+}
+
 cd "${PROJECT_ROOT}" || exit 1
+
+if ! mkdir "${LOCK_DIR}" 2>/dev/null; then
+  log "FAIL  Another pipeline run is already in progress"
+  exit 1
+fi
+
+trap cleanup_lock EXIT
 
 if [[ ! -x "${PYTHON_BIN}" ]]; then
   log "FAIL  Missing virtualenv python at ${PYTHON_BIN}"
