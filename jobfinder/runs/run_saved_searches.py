@@ -11,6 +11,7 @@ from jobfinder.core.storage import connect, create_run, finish_run, init_db, ups
 from jobfinder.scrapers.doctrine import DoctrineScraper, DoctrineSearchConfig
 from jobfinder.scrapers.englishjobs import EnglishJobsScraper, EnglishJobsSearchConfig
 from jobfinder.scrapers.linkedin import LinkedInScraper, LinkedInSearchConfig
+from jobfinder.scrapers.remotech import RemotechScraper, RemotechSearchConfig
 from jobfinder.scrapers.remotefr import RemoteFrScraper, RemoteFrSearchConfig
 from jobfinder.scrapers.wttj import WttjScraper, WttjSearchConfig
 
@@ -55,6 +56,9 @@ def _run_single_search(
     elif source == "remotefr":
         config = RemoteFrSearchConfig.from_search_url(search_url)
         scraper = RemoteFrScraper(config=config, delay_seconds=delay_seconds)
+    elif source == "remotech":
+        config = RemotechSearchConfig.from_search_url(search_url)
+        scraper = RemotechScraper(config=config, delay_seconds=delay_seconds)
     else:
         raise SystemExit(f"Unsupported source: {source}")
     run_id = create_run(conn, source=scraper.source, search_url=search_url)
