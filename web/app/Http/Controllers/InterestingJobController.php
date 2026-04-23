@@ -19,6 +19,7 @@ class InterestingJobController extends Controller
         'doctrine',
         'englishjobs',
         'linkedin',
+        'remotech',
         'remotefr',
         'wttj',
     ];

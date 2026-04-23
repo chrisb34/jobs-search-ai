@@ -29,3 +29,12 @@ searches:
   - name: doctrine-careers
     source: doctrine
     search_url: "https://www.doctrine.fr/recrutement"
+  - name: remotech-backend-europe
+    source: remotech
+    search_url: "https://www.remotech.ai/job-roles/backend-developer"
+  - name: remotech-fullstack-europe
+    source: remotech
+    search_url: "https://www.remotech.ai/job-roles/full-stack-developer"
+  - name: remotech-devops-europe
+    source: remotech
+    search_url: "https://www.remotech.ai/job-roles/devops"

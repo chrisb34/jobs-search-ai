@@ -11,6 +11,7 @@ from jobfinder.scrapers.englishjobs import EnglishJobsScraper, EnglishJobsSearch
 from jobfinder.core.storage import connect, create_run, finish_run, init_db, upsert_normalized_job, upsert_raw_job
 from jobfinder.scrapers.doctrine import DoctrineScraper, DoctrineSearchConfig
 from jobfinder.scrapers.linkedin import LinkedInScraper, LinkedInSearchConfig
+from jobfinder.scrapers.remotech import RemotechScraper, RemotechSearchConfig
 from jobfinder.scrapers.remotefr import RemoteFrScraper, RemoteFrSearchConfig
 from jobfinder.scrapers.wttj import WttjScraper, WttjSearchConfig
 
@@ -51,6 +52,9 @@ def _build_scraper(search_url: str, delay_seconds: float):
     if "remotefr.com" in host:
         config = RemoteFrSearchConfig.from_search_url(search_url)
         return RemoteFrScraper(config=config, delay_seconds=delay_seconds)
+    if "remotech.ai" in host:
+        config = RemotechSearchConfig.from_search_url(search_url)
+        return RemotechScraper(config=config, delay_seconds=delay_seconds)
     raise SystemExit(f"Unsupported search URL host: {host}")
 
 
